@@ -2,6 +2,8 @@
 from json import loads
 from json import dumps
 
+from aiolxd.end_points.api import Api
+
 from .config import Config
 
 class Client:
@@ -18,6 +20,10 @@ class Client:
         """
         self.config = Config(**kwargs)
         self._session = self.config.get_session()
+
+    def api(self):
+        """Return the api root endpoint."""
+        return Api(self)
 
     async def query(self, method, url, data=None):
         """Query the lxd api.

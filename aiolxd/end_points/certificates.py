@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 
-from aiolxd.core import IterableEndPoint
-from aiolxd.core import ApiObject
+from aiolxd.core.iterable_end_point import IterableEndPoint
+from aiolxd.core.api_object import ApiObject
 
 class Certificate(ApiObject):
     """/1.0/certificates/{sha256} LXD API object."""
@@ -16,15 +16,8 @@ class Certificate(ApiObject):
 
 class Certificates(IterableEndPoint):
     """/1.0/certificates LXD API end point."""
-
-    def __init__(self, client):
-        """Initialize the Certificates endpoint.
-
-        Args:
-            client (aiolxd.Client): The LXD API client.
-
-        """
-        super().__init__(client, '/1.0/certificates')
+    url = '/1.0/certificates'
+    child_class = Certificate
 
     @asynccontextmanager
     async def add(self, password=None, cert_path=None, name=None):
@@ -63,6 +56,6 @@ class Certificates(IterableEndPoint):
 
         await self._query('post', data)
 
-        child_url = '%s/%s' % (self._url, sha1)
+        child_url = '%s/%s' % (self.url, sha1)
         async with Certificate(self._client, child_url) as child:
             yield child

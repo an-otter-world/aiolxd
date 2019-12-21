@@ -32,7 +32,7 @@ async def test_add_client_certificate(lxdclient, api_mock, datadir):
     api_mock('get', '/1.0/certificates/' + default_sha, {})
     api_mock('post', '/1.0/certificates', post_data.update)
 
-    certificates = Certificates(lxdclient)
+    certificates = lxdclient.api().certificates()
 
     # Checks client certificate is chosen if no path is provided
     async with certificates.add(password='password', name='default'):
