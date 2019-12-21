@@ -16,7 +16,7 @@ _MOCK_HOST = 'lxd'
 @mark.asyncio
 async def lxdclient():
     """Fixture returning a correctly initalized aiolxd client."""
-    cert_path = join(dirname(__file__), 'mocks', 'data')
+    cert_path = join(dirname(__file__), 'data')
     async with Client(
             verify_ssl=False,
             base_url='http://' + _MOCK_HOST,
