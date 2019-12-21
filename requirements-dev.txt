@@ -3,3 +3,4 @@ aresponses
 pydocstyle
 pylint
 pytest
+pytest-cov
