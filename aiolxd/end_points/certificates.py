@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 
-from aiolxd.core.iterable_end_point import IterableEndPoint
+from aiolxd.core.collection import Collection
 from aiolxd.core.api_object import ApiObject
 
 class Certificate(ApiObject):
@@ -14,7 +14,7 @@ class Certificate(ApiObject):
         'certificate'
     }
 
-class Certificates(IterableEndPoint):
+class Certificates(Collection):
     """/1.0/certificates LXD API end point."""
     url = '/1.0/certificates'
     child_class = Certificate

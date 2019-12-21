@@ -1,13 +1,13 @@
-"""Iterable endpoint module."""
+"""Collection endpoint module."""
 from .end_point import EndPoint
 from .api_object import ApiObject
 
-class IterableEndPoint(EndPoint):
-    """Endpoint that can be iterated to returns child objects.
+class Collection(EndPoint):
+    """Endpoint containing child objects.
 
     For example /1.0/certificates, or /1.0/containers. The object can be
     iterated with an async for loop, i.e :
-    async for child in api.iterable_end_point:
+    async for child in api.collection:
         #do stuff with child
 
     See api.certificates or api.containers for an example.

@@ -5,7 +5,7 @@ from aiolxd.core import ApiObject
 
 @mark.asyncio
 async def test_load_properties(lxdclient, api_mock):
-    """Checks iterating an iterable end point returns it's children."""
+    """Checks using with on an api object loads it's properties."""
     api_mock('get', '/', {
         'property_1': 'String property',
         'property_2': True
@@ -17,7 +17,7 @@ async def test_load_properties(lxdclient, api_mock):
 
 @mark.asyncio
 async def test_save_properties(lxdclient, api_mock):
-    """Checks iterating an iterable end point returns it's children."""
+    """Checks iterating an collection end point returns it's children."""
     saved = {}
 
     api_mock('get', '/', {
