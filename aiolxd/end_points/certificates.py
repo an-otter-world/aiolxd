@@ -14,15 +14,6 @@ class Certificate(ApiObject):
         'certificate'
     }
 
-    def __eq__(self, other):
-        """Check equality on two different Certificate objects.
-
-        Uses the fingerprint to check for equality.
-        """
-        if isinstance(other, Certificate):
-            return self.fingerprint == other.fingerprint
-        return False
-
 class Certificates(IterableEndPoint):
     """/1.0/certificates LXD API end point."""
 
@@ -33,7 +24,7 @@ class Certificates(IterableEndPoint):
             client (aiolxd.Client): The LXD API client.
 
         """
-        super().__init__(client, '1.0/certificates')
+        super().__init__(client, '/1.0/certificates')
 
     @asynccontextmanager
     async def add(self, password=None, cert_path=None, name=None):
@@ -52,11 +43,10 @@ class Certificates(IterableEndPoint):
         """
         data = {
             'type': 'client',
-            'password': password
         }
 
-        if path is None:
-            path = self._client.config.client_cert
+        if cert_path is None:
+            cert_path = self._client.config.client_cert
 
         with open(cert_path, 'r') as cert_file:
             cert_string = cert_file.read()
@@ -67,6 +57,9 @@ class Certificates(IterableEndPoint):
 
         if name is not None:
             data['name'] = name
+
+        if password is not None:
+            data['password'] = password
 
         await self._query('post', data)
 
