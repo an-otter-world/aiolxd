@@ -1,6 +1,5 @@
 """Unit tests for aiolxd client."""
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from json import dumps
 from json import loads
 
@@ -12,16 +11,21 @@ from aiolxd import Client
 
 _MOCK_HOST = 'lxd'
 
+@fixture
+def datadir():
+    """Return the data directory containing various files usefull for tests."""
+    return Path(__file__).parent / 'data'
+
 @yield_fixture
 @mark.asyncio
-async def lxdclient():
+#pylint: disable=redefined-outer-name
+async def lxdclient(datadir):
     """Fixture returning a correctly initalized aiolxd client."""
-    cert_path = join(dirname(__file__), 'data')
     async with Client(
             verify_ssl=False,
             base_url='http://' + _MOCK_HOST,
-            client_cert=join(cert_path, 'client.crt'),
-            client_key=join(cert_path, 'client.key')
+            client_cert=datadir / 'client.crt',
+            client_key=datadir / 'client.key',
     ) as client:
         yield client
 
