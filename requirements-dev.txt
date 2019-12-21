@@ -3,4 +3,5 @@ aresponses
 pydocstyle
 pylint
 pytest
+pytest-asyncio
 pytest-cov
