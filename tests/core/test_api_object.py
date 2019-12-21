@@ -35,3 +35,20 @@ async def test_save_properties(lxdclient, api_mock):
         'property_1': 'Wrote value',
         'property_2': False
     }
+
+@mark.asyncio
+async def test_delete(lxdclient, api_mock):
+    """Checks delete an object works."""
+    deleted = {'value': False}
+
+    def _handler(data):
+        deleted['value'] = True
+        return data
+
+    api_mock('get', '/', {})
+    api_mock('delete', '/', _handler)
+
+    async with ApiObject(lxdclient, '/') as obj:
+        await obj.delete()
+
+    assert deleted['value']

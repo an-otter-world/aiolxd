@@ -46,7 +46,7 @@ class ApiObject(EndPoint):
         After calling this method, any tentative to access a method or property
         will raise an exception.
         """
-        await self._query('delete')
+        await self._query('delete', {})
 
     def __getattr__(self, name):
         """Return a property that was loaded from the LXD API."""

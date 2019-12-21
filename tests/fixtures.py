@@ -22,7 +22,7 @@ def datadir():
 async def lxdclient(datadir):
     """Fixture returning a correctly initalized aiolxd client."""
     async with Client(
-            verify_ssl=False,
+            verify_host_certificate=False,
             base_url='http://' + _MOCK_HOST,
             client_cert=datadir / 'client.crt',
             client_key=datadir / 'client.key',
