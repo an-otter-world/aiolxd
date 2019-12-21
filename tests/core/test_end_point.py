@@ -11,6 +11,12 @@ class _TestEndPoint(EndPoint):
         """
         return await self._query(method, data)
 
+    async def _load(self):
+        pass
+
+    async def _save(self):
+        pass
+
 @mark.asyncio
 async def test_request_methods(lxdclient, api_mock):
     """Checks client request methods works."""

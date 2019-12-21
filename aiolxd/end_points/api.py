@@ -5,6 +5,7 @@ from .certificates import Certificates
 
 class Api(ApiObject):
     """/1.0/containers LXD API end point."""
+
     url = '/1.0/'
 
     def certificates(self):

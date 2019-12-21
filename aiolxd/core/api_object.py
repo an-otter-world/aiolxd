@@ -21,32 +21,18 @@ class ApiObject(EndPoint):
     """
 
     readonly_fields = {}
-    _api_data = {}
-    _is_dirty = False
 
-    async def save(self):
-        """Save the writable properties of this object.
+    def __init__(self, client, url=None):
+        """Initialize this ApiObject.
 
-        This will be automatically called when leaving the context manager of
-        the object, if the object isn't deleted.
+        Args:
+            client (aiolxd.Client): The LXD API client.
+            url (str): The url of this endpoint.
+
         """
-        if not self._is_dirty:
-            return
-
-        writable_data = {}
-        for key, value in self._api_data.items():
-            if key not in self.readonly_fields:
-                writable_data[key] = value
-
-        await self._query('put', writable_data)
-
-    async def delete(self):
-        """Delete this object.
-
-        After calling this method, any tentative to access a method or property
-        will raise an exception.
-        """
-        await self._query('delete', {})
+        super().__init__(client, url)
+        self._api_data = {}
+        self._is_dirty = False
 
     def __getattr__(self, name):
         """Return a property that was loaded from the LXD API."""
@@ -58,28 +44,25 @@ class ApiObject(EndPoint):
         If the object was deleted, or if the property is readonly, it will
         raise an AttributeError.
         """
-        data = self._api_data
-        if name in data and data[name] != value:
-            data[name] = value
-            self._is_dirty = True
-        else:
-            super().__setattr__(name, value)
+        if name != '_api_data' and '_api_data' in self.__dict__:
+            data = self.__dict__['_api_data']
+            if name in data and data[name] != value:
+                data[name] = value
+                self._is_dirty = True
+                return
 
-    async def __aenter__(self):
-        """Enters a context.
+        super().__setattr__(name, value)
 
-        Will load the object's properties from LXD.
-        """
+    async def _load(self):
         self._api_data = await self._query('get')
-        return self
 
-    async def __aexit__(self, exception_type, exception, _):
-        """Exit a context.
+    async def _save(self):
+        if not self._is_dirty:
+            return
 
-        Will save the object if one of it's writable properties have been
-        changed, or will delete the object if a call to delete() was made in
-        the manager's context.
-        """
-        if exception_type is None:
-            await self.save()
-        return False
+        writable_data = {}
+        for key, value in self._api_data.items():
+            if key not in self.readonly_fields:
+                writable_data[key] = value
+
+        await self._query('put', writable_data)

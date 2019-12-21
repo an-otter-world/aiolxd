@@ -16,6 +16,7 @@ class Certificate(ApiObject):
 
 class Certificates(Collection):
     """/1.0/certificates LXD API end point."""
+
     url = '/1.0/certificates'
     child_class = Certificate
 

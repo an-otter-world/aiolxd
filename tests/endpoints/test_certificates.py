@@ -3,8 +3,6 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 from pytest import mark
 
-from aiolxd.end_points.certificates import Certificates
-
 @mark.asyncio
 async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
     """Checks add certificate works."""
@@ -15,7 +13,7 @@ async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
     api_mock('get', '/1.0/certificates/' + dummy_sha, {})
     api_mock('post', '/1.0/certificates', post_data.update)
 
-    certificates = Certificates(lxdclient)
+    certificates = lxdclient.api().certificates()
 
     async with certificates.add(cert_path=dummy_path):
         assert post_data == {
