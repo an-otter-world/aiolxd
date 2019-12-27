@@ -38,15 +38,16 @@ class _AResponseWrapper:
     def __init__(self, aresponses):
         self._aresponses = aresponses
 
-    def __call__(self, method, url, response):
+    def __call__(self, method, url, response, sync=True):
         if callable(response):
             response = self._response_wrapper(response)
         else:
             response = dumps({
+                'type': 'sync' if sync else 'async',
                 'metadata': response
             })
         self._aresponses.add(
-            self._aresponses.ANY,
+            _MOCK_HOST,
             url,
             method,
             response
@@ -59,6 +60,7 @@ class _AResponseWrapper:
             return self._aresponses.Response(
                 status=200,
                 text=dumps({
+                    'type': 'sync',
                     'metadata': result
                 })
             )

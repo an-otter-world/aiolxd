@@ -40,13 +40,10 @@ class Client:
 
         request = self._session.request(method, url, data=json_data)
         async with request as response:
-            return await self._handle_response(response)
-
-    async def _handle_response(self, response):
-        body = await response.read()
-        json = body.decode('utf-8')
-        response.raise_for_status()
-        return loads(json)['metadata']
+            body = await response.read()
+            json = body.decode('utf-8')
+            response.raise_for_status()
+            return loads(json)
 
     async def __aenter__(self):
         """Enter the client context."""

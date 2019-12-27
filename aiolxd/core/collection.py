@@ -76,6 +76,7 @@ class Collection(EndPoint):
 
     async def _load(self):
         self._children = await self._query('get')
+        print(self._children)
 
     async def _save(self):
         for child in self._deleted_children:
@@ -83,4 +84,4 @@ class Collection(EndPoint):
         self._deleted_children = []
 
     def _child_url(self, name):
-        return '%s%s' % (self.url, name)
+        return '%s/%s' % (self.url, name)
