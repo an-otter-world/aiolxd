@@ -1,5 +1,4 @@
 """Operation helpers."""
-from asyncio import FIRST_COMPLETED
 from asyncio import Task
 from asyncio import wait
 
@@ -72,26 +71,12 @@ class Operation:
     async def _write_websocket(self, secret, handler):
         socket = await self.__connect_websocket(secret)
 
-        read_task = Task(handler())
-        receive_task = Task(socket.receive())
+        if handler is None:
+            await socket.close()
+            return
 
-        while True:
-            tasks = [read_task, receive_task]
-            (done, _) = await wait(tasks, return_when=FIRST_COMPLETED)
-
-            if read_task in done:
-                data = read_task.result()
-                await socket.send_bytes(data)
-                read_task = Task(handler())
-
-            if receive_task in done:
-                msg = receive_task.result()
-                msg_type = msg.type
-                if msg_type in [WSMsgType.CLOSE, WSMsgType.CLOSED]:
-                    break
-                receive_task = Task(socket.receive)
-
-        read_task.cancel()
+        async for data in handler():
+            await socket.send_bytes(data)
 
     async def _control_websocket(self, secret):
         socket = await self.__connect_websocket(secret)

@@ -7,13 +7,41 @@ from aiohttp import WSMsgType
 
 @mark.asyncio
 async def test_container_exec(lxdclient, api_mock):
-    """Checks add certificate works."""
+    """Check that exec without stdin / stdout / stderr handler work."""
     api_mock('get', '/1.0/containers', ['/1.0/containers/test'])
     api_mock('get', '/1.0/containers/test', {})
-    _mock_exec(api_mock)
+
+    data = {}
+    api_mock('post', '/1.0/containers/test/exec', data.update)
+
+    async with lxdclient.api().containers() as containers:
+        async with containers['test'] as test:
+            await test.exec(
+                ['dummy', 'command'],
+                {'VARIABLE': 'VALUE'},
+                group=1000,
+                cwd='/some/path',
+                user=1000)
+
+            assert data == {
+                'command': ['dummy', 'command'],
+                'environment': {'VARIABLE': 'VALUE'},
+                'interactive': False,
+                'record-output': False,
+                'wait-for-websocket': False,
+                'cwd': '/some/path',
+                'group': 1000,
+                'user': 1000,
+            }
+
+@mark.asyncio
+async def test_container_exec_websockets(lxdclient, api_mock):
+    """Check that exec stdin / stdout / stderr websockets."""
+    _mock_exec_websockets(api_mock)
 
     async def _stdin_handler():
-        return 'stdin_data'.encode('utf-8')
+        yield 'stdin_data'.encode('utf-8')
+        yield 'stdin_data'
 
     async def _stdout_handler(data):
         assert data.decode('utf-8') == 'stdout_data'
@@ -24,14 +52,32 @@ async def test_container_exec(lxdclient, api_mock):
     async with lxdclient.api().containers() as containers:
         async with containers['test'] as test:
             await test.exec(
-                ['apt', 'update'],
+                ['dummy', 'command'],
                 {'VARIABLE': 'VALUE'},
                 stdin=_stdin_handler,
                 stdout=_stdout_handler,
                 stderr=_stderr_handler,
             )
 
-def _mock_exec(api_mock):
+@mark.asyncio
+async def test_container_exec_partial_websockets(lxdclient, api_mock):
+    """Check that exec with only one stdin / stdout / stderr handler work."""
+    _mock_exec_websockets(api_mock)
+    async def _stdout_handler(data):
+        assert data.decode('utf-8') == 'stdout_data'
+
+    async with lxdclient.api().containers() as containers:
+        async with containers['test'] as test:
+            await test.exec(
+                ['dummy', 'command'],
+                {'VARIABLE': 'VALUE'},
+                stdout=_stdout_handler,
+            )
+
+def _mock_exec_websockets(api_mock):
+    api_mock('get', '/1.0/containers', ['/1.0/containers/test'])
+    api_mock('get', '/1.0/containers/test', {})
+
     operation_id = 'test_exec'
     api_mock('post', '/1.0/containers/test/exec', {
         'id': operation_id,
@@ -59,15 +105,18 @@ def _mock_exec(api_mock):
             message_type = message.type
             assert message_type in [
                 WSMsgType.BINARY,
+                WSMsgType.CLOSE,
+                WSMsgType.CLOSED,
                 WSMsgType.CLOSING,
-                WSMsgType.CLOSED
             ]
             if message_type == WSMsgType.BINARY:
                 assert message.data.decode('utf-8') == 'stdin_data'
         elif secret == 'stdout_secret':
             await socket.send_bytes('stdout_data'.encode('utf-8'))
+            await socket.send_str('stdout_data')
         elif secret == 'stderr_secret':
             await socket.send_bytes('stderr_data'.encode('utf-8'))
+            await socket.send_str('stderr_data')
         else:
             assert secret == 'control_secret'
 
