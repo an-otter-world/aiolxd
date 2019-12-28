@@ -25,6 +25,17 @@ class Client:
         """Return the api root endpoint."""
         return Api(self)
 
+
+    async def connect_websocket(self, operation_id, secret):
+        """Connect to an operation websocket."""
+        url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
+        url = url_format.format(
+            base_url=self.config.base_url,
+            id=operation_id,
+            secret=secret
+        )
+        return await self._session.ws_connect(url)
+
     async def query(self, method, url, data=None):
         """Query the lxd api.
 

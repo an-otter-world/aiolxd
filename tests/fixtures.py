@@ -2,6 +2,7 @@
 from pathlib import Path
 from json import dumps
 from json import loads
+from asyncio import iscoroutine
 
 from pytest import fixture
 from pytest import mark
@@ -38,29 +39,50 @@ class _AResponseWrapper:
     def __init__(self, aresponses):
         self._aresponses = aresponses
 
+    def raw_handler(self, url, method, response, match_querystring=False):
+        """Add a new mock handler or response for the given url & method."""
+        self._aresponses.add(
+            _MOCK_HOST,
+            url,
+            method,
+            response,
+            match_querystring=match_querystring
+        )
+
     def __call__(self, method, url, response, sync=True):
         if callable(response):
-            response = self._response_wrapper(response)
+            response = self._response_wrapper(response, sync)
         else:
             response = dumps({
                 'type': 'sync' if sync else 'async',
                 'metadata': response
             })
-        self._aresponses.add(
-            _MOCK_HOST,
+        self.raw_handler(
             url,
             method,
             response
         )
 
-    def _response_wrapper(self, handler):
+    def _response_wrapper(self, handler, sync):
         async def _handler(request):
             content = await request.content.read()
-            result = handler(loads(content))
+
+            if not isinstance(content, str):
+                content = content.decode('utf-8')
+
+            if content:
+                content = loads(content)
+            else:
+                content = None
+
+            result = handler(content)
+            if iscoroutine(result):
+                result = await result
+
             return self._aresponses.Response(
                 status=200,
                 text=dumps({
-                    'type': 'sync',
+                    'type': 'sync' if sync else 'async',
                     'metadata': result
                 })
             )

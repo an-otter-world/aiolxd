@@ -16,9 +16,9 @@ class Exec(Operation):
             container_url,
             command,
             environment=None,
+            stdin=None,
             stdout=None,
             stderr=None,
-            stdin=None,
             **kwargs):
         data = kwargs_to_lxd(**kwargs)
         data.update({
@@ -38,12 +38,12 @@ class Exec(Operation):
         self._stderr = stderr
         self._stdin = stdin
 
-    async def _get_websockets(self, metadata):
+    def _get_jobs(self, metadata):
         websockets = metadata['fds']
-        yield self._socket_to_stream(websockets['0'], self._stdin)
-        yield self._socket_to_stream(websockets['1'], self._stdout)
-        yield self._stream_to_socket(self._stdin, websockets['2'])
-        yield self._control_socket(websockets['control'])
+        yield self._write_websocket(websockets['0'], self._stdin)
+        yield self._read_websocket(websockets['1'], self._stdout)
+        yield self._read_websocket(websockets['2'], self._stderr)
+        yield self._control_websocket(websockets['control'])
 
 class Container(ApiObject):
     """/1.0/containers/{name} LXD API end point."""

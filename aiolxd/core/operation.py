@@ -25,11 +25,10 @@ class Operation:
         return []
 
     async def _connect_websocket(self, secret):
-        socket_url_format = '/1.0/operations{id}/websocket?secret={secret}'
-        socket_url = socket_url_format.format(id=self._id, secret=secret)
-        return await self._client.ws_connect(socket_url)
+        assert self._id is not None
+        return await self._client.connect_websocket(self._id, secret)
 
-    async def _read_websocket(self, handler, secret):
+    async def _read_websocket(self, secret, handler):
         socket = await self._connect_websocket(secret)
 
         async def _on_binary(message):
@@ -52,15 +51,14 @@ class Operation:
 
         while True:
             message = await socket.receive()
-            msg_type = message.type
-            msg_data = message.data
-            if msg_type in handlers:
-                handler = handlers[msg_type]
-                await handler(msg_data)
-            elif msg_type in [WSMsgType.CLOSE, WSMsgType.CLOSED]:
+            message_type = message.type
+            if message_type in handlers:
+                message_handler = handlers[message_type]
+                await message_handler(message)
+            elif message_type in [WSMsgType.CLOSE, WSMsgType.CLOSED]:
                 break
 
-    async def _write_websocket(self, handler, secret):
+    async def _write_websocket(self, secret, handler):
         socket = await self._connect_websocket(secret)
 
         read_task = Task(handler())
@@ -68,11 +66,11 @@ class Operation:
 
         while True:
             tasks = [read_task, receive_task]
-            (done, _) = wait(tasks, return_when=FIRST_COMPLETED)
+            (done, _) = await wait(tasks, return_when=FIRST_COMPLETED)
 
             if read_task in done:
                 data = read_task.result()
-                await socket.send(data)
+                await socket.send_bytes(data)
                 read_task = Task(handler())
 
             if receive_task in done:
@@ -83,6 +81,11 @@ class Operation:
                 receive_task = Task(socket.receive)
 
         read_task.cancel()
+
+    async def _control_websocket(self, secret):
+        socket = await self._connect_websocket(secret)
+        # TODO : Implement some wrapper for control socket operation.
+        await socket.close()
 
     async def __process(self):
         result = await self._client.query(
@@ -97,9 +100,9 @@ class Operation:
             jobs = self._get_jobs(metadata)
             tasks = [Task(it) for it in jobs]
 
-            operation_id = metadata['id']
-            wait_url = '/1.0/operations/{id}/wait'.format(id=operation_id)
+            self._id = metadata['id']
+            wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
             result = await self._client.query('get', wait_url)
-            wait(tasks)
+            await wait(tasks)
 
         return result['metadata']
