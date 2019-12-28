@@ -11,7 +11,16 @@ class Operation:
     Allows to await the same way synchronous & asynchronous operations, and
     handle websockets for operation creating some.
     """
+
     def __init__(self, client, method, url, data):
+        """Initialize this operation.
+
+        Args:
+            client (aiolxd.Client) : The LXD client.
+            method (str) : HTTP method (get, post, put, patch).
+            url (str) : The endpoint of this operation.
+            data (dict) : Parameters to send to this command.
+        """
         self._client = client
         self._method = method
         self._url = url
@@ -19,17 +28,19 @@ class Operation:
         self._id = None
 
     def __await__(self):
+        """Await until this operation is terminated.
+
+        Will return immediatly for synchronous LXD operations, will wait for
+        the operation to finish in the case of an asynchronous one.
+        """
         return self.__process().__await__()
 
+    #pylint: disable=no-self-use
     def _get_jobs(self, _):
         return []
 
-    async def _connect_websocket(self, secret):
-        assert self._id is not None
-        return await self._client.connect_websocket(self._id, secret)
-
     async def _read_websocket(self, secret, handler):
-        socket = await self._connect_websocket(secret)
+        socket = await self.__connect_websocket(secret)
 
         async def _on_binary(message):
             if handler is None:
@@ -59,7 +70,7 @@ class Operation:
                 break
 
     async def _write_websocket(self, secret, handler):
-        socket = await self._connect_websocket(secret)
+        socket = await self.__connect_websocket(secret)
 
         read_task = Task(handler())
         receive_task = Task(socket.receive())
@@ -83,7 +94,7 @@ class Operation:
         read_task.cancel()
 
     async def _control_websocket(self, secret):
-        socket = await self._connect_websocket(secret)
+        socket = await self.__connect_websocket(secret)
         # TODO : Implement some wrapper for control socket operation.
         await socket.close()
 
@@ -95,7 +106,8 @@ class Operation:
         )
         if result['type'] == 'sync':
             return result['metadata']
-        elif result['type'] == 'async':
+
+        if result['type'] == 'async':
             metadata = result['metadata']
             jobs = self._get_jobs(metadata)
             tasks = [Task(it) for it in jobs]
@@ -106,3 +118,7 @@ class Operation:
             await wait(tasks)
 
         return result['metadata']
+
+    async def __connect_websocket(self, secret):
+        assert self._id is not None
+        return await self._client.connect_websocket(self._id, secret)

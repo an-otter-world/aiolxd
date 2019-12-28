@@ -10,6 +10,7 @@ class Exec(Operation):
     This will map stdin, stderr and stdin websockets to given streams, and wait
     until the command is terminated.
     """
+
     def __init__(
             self,
             client,
@@ -20,6 +21,21 @@ class Exec(Operation):
             stdout=None,
             stderr=None,
             **kwargs):
+        """Initialize the Exec operation.
+
+        Args:
+            client (aiolxd.Client) : The LXD client
+            container_url (str) : Url to the container endpoint.
+            command (array) : Command to execute, in a Popen-like format.
+            environment (dict) : Key-value pair of environment variables.
+            stdin (async function) : Asynchronous generator yielding string or
+                                     byte arrays that are sent to stdin.
+            stdout (async function) : Function taking a byte array as parameter.
+            stderr (async function) : Function taking a byte array as parameter.
+            **kwargs (dict) : Additional parameter to send to the LXD exec
+                              command (see LXD API documentation.)
+
+        """
         data = kwargs_to_lxd(**kwargs)
         data.update({
             "command": list(command),
@@ -49,7 +65,7 @@ class Container(ApiObject):
     """/1.0/containers/{name} LXD API end point."""
 
     def exec(self, *args, **kwargs):
-        """ Execute a command on this container.
+        """Execute a command on this container.
 
         Args:
            *args, **kwargs : Forwarded to the Exec operation. See Exec
