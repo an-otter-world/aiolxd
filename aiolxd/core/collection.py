@@ -2,6 +2,7 @@
 from .end_point import EndPoint
 from .api_object import ApiObject
 
+
 class Collection(EndPoint):
     """Endpoint containing child objects.
 
@@ -12,10 +13,11 @@ class Collection(EndPoint):
 
     See api.certificates or api.containers for an example.
 
-    Attributes:
+    Members:
         child_class : Class Class of children that must be created. The LXD
                       client and the child url will be passed in the
                       constructor.
+
     """
 
     child_class = ApiObject
@@ -46,7 +48,7 @@ class Collection(EndPoint):
 
         """
         child_url = self._child_url(key)
-        if not child_url in self._children:
+        if child_url not in self._children:
             raise IndexError()
         return self.child_class(self._client, child_url)
 
@@ -58,7 +60,7 @@ class Collection(EndPoint):
         of the collection).
         """
         child_url = self._child_url(key)
-        if not child_url in self._children:
+        if child_url not in self._children:
             raise IndexError()
         self._children.remove(child_url)
         self._deleted_children.append(child_url)

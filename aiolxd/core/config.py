@@ -4,10 +4,11 @@ from ssl import SSLContext
 from aiohttp import ClientSession
 from aiohttp import TCPConnector
 
+
 class Config:
     """The LXD client config.
 
-    Attributes:
+    Members:
         base_url (str): Base url of the LXD API
         verify_host (bool): Weither to check or not for the server certificate
                             authenticity.
@@ -27,6 +28,7 @@ class Config:
         Args:
             **kwargs (dict): Dictionnary used to update the class attributes.
                              Refer to the class attributes for accepted values.
+
         """
         self.__dict__.update(**kwargs)
 

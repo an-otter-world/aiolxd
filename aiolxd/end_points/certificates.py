@@ -6,6 +6,7 @@ from OpenSSL.crypto import load_certificate
 from aiolxd.core.collection import Collection
 from aiolxd.core.api_object import ApiObject
 
+
 class Certificate(ApiObject):
     """/1.0/certificates/{sha256} LXD API object."""
 
@@ -13,6 +14,7 @@ class Certificate(ApiObject):
         'fingerprint',
         'certificate'
     }
+
 
 class Certificates(Collection):
     """/1.0/certificates LXD API end point."""

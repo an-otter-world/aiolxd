@@ -6,6 +6,7 @@ from aiolxd.end_points.api import Api
 
 from .config import Config
 
+
 class Client:
     """The LXD HTTP client."""
 
@@ -25,7 +26,6 @@ class Client:
         """Return the api root endpoint."""
         return Api(self)
 
-
     async def connect_websocket(self, operation_id, secret):
         """Connect to an operation websocket."""
         url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
@@ -43,6 +43,7 @@ class Client:
             url (str): The relative url to query.
             method (str): HTTP method to use.
             data (Object): Data as a python object to send with the request.
+
         """
         url = '%s%s' % (self.config.base_url, url)
         json_data = None

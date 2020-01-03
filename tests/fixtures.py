@@ -12,14 +12,16 @@ from aiolxd import Client
 
 _MOCK_HOST = 'lxd'
 
+
 @fixture
 def datadir():
     """Return the data directory containing various files usefull for tests."""
     return Path(__file__).parent / 'data'
 
+
 @yield_fixture
 @mark.asyncio
-#pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name
 async def lxdclient(datadir):
     """Fixture returning a correctly initalized aiolxd client."""
     async with Client(
@@ -30,10 +32,12 @@ async def lxdclient(datadir):
     ) as client:
         yield client
 
+
 @fixture
 def api_mock(aresponses):
     """Return an _AResponseWrapper easing api mocks declaration."""
     return _AResponseWrapper(aresponses)
+
 
 class _AResponseWrapper:
     def __init__(self, aresponses):

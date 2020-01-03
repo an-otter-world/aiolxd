@@ -3,6 +3,7 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 from pytest import mark
 
+
 @mark.asyncio
 async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
     """Checks add certificate works."""
@@ -20,6 +21,7 @@ async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
             'type': 'client',
             'cert': dummy_cert,
         }
+
 
 @mark.asyncio
 async def test_add_client_certificate(lxdclient, api_mock, datadir):
@@ -40,6 +42,7 @@ async def test_add_client_certificate(lxdclient, api_mock, datadir):
             'cert': default_cert,
             'password': 'password'
         }
+
 
 def _load_cert(cert_path):
     with open(cert_path, 'r') as cert_file:

@@ -3,6 +3,7 @@ from pytest import mark
 
 from aiolxd.core import ApiObject
 
+
 @mark.asyncio
 async def test_load_properties(lxdclient, api_mock):
     """Checks using with on an api object loads it's properties."""
@@ -14,6 +15,7 @@ async def test_load_properties(lxdclient, api_mock):
     async with ApiObject(lxdclient, '/') as obj:
         assert obj.property_1 == 'String property'
         assert obj.property_2
+
 
 @mark.asyncio
 async def test_save_properties(lxdclient, api_mock):

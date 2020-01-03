@@ -1,6 +1,7 @@
 """LXD object abstraction end point."""
 from .end_point import EndPoint
 
+
 class ApiObject(EndPoint):
     """Endpoint abstracting an lxd api object.
 
@@ -14,7 +15,7 @@ class ApiObject(EndPoint):
 
         # Properties are now written through put here if no exception occured.
 
-    Attributes:
+    Members:
         readonly_fields (set): Properties that shouldn't be wrote when object
                                is saved.
 
