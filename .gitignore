@@ -2,5 +2,8 @@
 *.egg-info
 .coverage
 .env
+.mypy_cache
 .pytest_cache
+build
+dist
 htmlcov

@@ -1,0 +1,36 @@
+output-format: pylint
+strictness: veryhigh
+test-warnings: true
+doc-warnings: true
+
+ignore-paths:
+  - .env
+
+pylint:
+  run: true
+  disable:
+    - too-few-public-methods
+    - line-too-long
+    - too-many-arguments
+
+mccabe:
+  run: true
+
+pep257:
+  run: true
+  disable:
+    - D203
+    - D213
+    - D407
+
+pep8:
+  options:
+    max-line-length: 80
+
+pyflakes:
+  run: true
+  disable:
+    - F401
+
+pyroma:
+  run: true

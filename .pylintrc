@@ -1,8 +1,0 @@
-[MASTER]
-disable=too-few-public-methods
-
-[DESIGN]
-max-args=8
-
-[MISCELLANEOUS]
-notes=FIXME
