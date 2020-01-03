@@ -4,6 +4,7 @@ from aiolxd.core.operation import Operation
 
 from aiolxd.core.utils import kwargs_to_lxd
 
+
 class Exec(Operation):
     """Container exec operation.
 
@@ -60,6 +61,7 @@ class Exec(Operation):
         yield self._read_websocket(websockets['1'], self._stdout)
         yield self._read_websocket(websockets['2'], self._stderr)
         yield self._control_websocket(websockets['control'])
+
 
 class Container(ApiObject):
     """/1.0/containers/{name} LXD API end point."""

@@ -3,6 +3,7 @@ from pytest import mark
 
 from aiolxd.core.end_point import EndPoint
 
+
 class _TestEndPoint(EndPoint):
     async def query(self, method, data=None):
         """Forward call to protected method.
@@ -17,10 +18,10 @@ class _TestEndPoint(EndPoint):
     async def _save(self):
         pass
 
+
 @mark.asyncio
 async def test_request_methods(lxdclient, api_mock):
     """Checks client request methods works."""
-
     data = {'yodeldi': 'dildedido'}
     api_mock('get', '/', 'This is a get')
     api_mock('post', '/', lambda request_data: request_data)
@@ -31,6 +32,7 @@ async def test_request_methods(lxdclient, api_mock):
 
     result = await endpoint.query('post', data)
     assert result == data
+
 
 async def _test_client_method(method, mock_method):
     data = {'yodeldi': 'dildedido'}

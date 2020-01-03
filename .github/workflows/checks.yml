@@ -1,0 +1,56 @@
+name: Checks
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set Up Python
+      uses: actions/setup-python@v1
+
+    - name: Install Dependencies
+      run: pip install -r requirements-dev.txt
+
+    - name: Lint
+      run: prospector
+    
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set Up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Dependencies
+      run: pip install -r requirements-dev.txt
+
+    - name: Run Unit Tests
+      run: pytest --cov-report term-missing
+
+    - name: Upload Coverage
+      if: matrix.python-version == '3.8'
+      run: |
+        pip install coveralls
+        coveralls 
+      env:
+        COVERALLS_SERVICE_NAME: github
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}

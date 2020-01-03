@@ -1,0 +1,28 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  pypi:
+    name: Publish to Pypi
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Set Up Python
+      uses: actions/setup-python@v1
+
+    - name: Build Package
+      run: |
+        pip install setuptools wheel
+        python setup.py sdist bdist_wheel
+
+    - name: Publish Package
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_PASSWORD }}

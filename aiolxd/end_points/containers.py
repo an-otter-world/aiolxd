@@ -2,6 +2,7 @@
 from aiolxd.core.collection import Collection
 from aiolxd.end_points.container import Container
 
+
 class Containers(Collection):
     """/1.0/containers LXD API end point."""
 

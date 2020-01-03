@@ -3,10 +3,11 @@ from abc import abstractmethod
 
 from .operation import Operation
 
+
 class EndPoint:
     """Represent an api endpoint, wrapping HTTP requests.
 
-    Attributes:
+    Members:
         url (str): The url of the endpoint, relative to base_url.
 
     """
@@ -56,5 +57,6 @@ class EndPoint:
         Args:
             method (str): HTTP method to use.
             data (Object): Data as a python object to send with the request.
+
         """
         return await Operation(self._client, method, self.url, data)

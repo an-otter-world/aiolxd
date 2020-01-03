@@ -4,6 +4,7 @@ from asyncio import wait
 
 from aiohttp import WSMsgType
 
+
 class Operation:
     """A LXD operation, either background or synchronous.
 
@@ -19,6 +20,7 @@ class Operation:
             method (str) : HTTP method (get, post, put, patch).
             url (str) : The endpoint of this operation.
             data (dict) : Parameters to send to this command.
+
         """
         self._client = client
         self._method = method
@@ -34,7 +36,7 @@ class Operation:
         """
         return self.__process().__await__()
 
-    #pylint: disable=no-self-use
+    # pylint: disable=no-self-use
     def _get_jobs(self, _):
         return []
 
