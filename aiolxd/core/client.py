@@ -1,6 +1,7 @@
 """HTTP client class & related utilities."""
-from json import loads
 from json import dumps
+from json import loads
+from pathlib import Path
 
 from aiolxd.end_points.api import Api
 
@@ -10,16 +11,28 @@ from .config import Config
 class Client:
     """The LXD HTTP client."""
 
-    def __init__(self, **kwargs):
+    def __init__(self,
+        base_url: str,
+        verify_host_certificate: bool = True,
+        client_key: Path = None,
+        client_cert: Path = None
+    ):
         """Initialize the client.
 
         Args:
-            **kwargs (Dictionary): Arguments that will be forwarded to
-                                   aiolxd.core.Config. See this class for
-                                   allowed values.
+            base_url: Base LXD API url.
+            verify_host_certificate: Weither to authenticate LXD host or not.
+            client_key: Client certificate key path.
+            client_cert: Client certificate cert path.
 
         """
-        self.config = Config(**kwargs)
+        self.config = Config(
+            base_url=base_url,
+            verify_host_certificate=verify_host_certificate,
+            client_key=client_key,
+            client_cert=client_cert
+        )
+
         self._session = self.config.get_session()
 
     def api(self):
