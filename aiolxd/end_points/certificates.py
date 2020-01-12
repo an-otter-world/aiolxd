@@ -22,7 +22,6 @@ class Certificates(Collection):
     url = '/1.0/certificates'
     child_class = Certificate
 
-    @asynccontextmanager
     async def add(self, password=None, cert_path=None, name=None):
         """Add a trusted certificate to the server.
 
@@ -44,8 +43,8 @@ class Certificates(Collection):
         if cert_path is None:
             cert_path = self._client.config.client_cert
 
-        with open(cert_path, 'r') as cert_file:
-            cert_string = cert_file.read()
+        with open(cert_path, 'rb') as cert_file:
+            cert_string = cert_file.read().decode('utf-8')
             cert = load_certificate(FILETYPE_PEM, cert_string)
             sha1 = cert.digest('sha256').decode('utf-8')
             sha1 = sha1.replace(':', '').lower()
@@ -60,5 +59,4 @@ class Certificates(Collection):
         await self._query('post', data)
 
         child_url = '%s/%s' % (self.url, sha1)
-        async with Certificate(self._client, child_url) as child:
-            yield child
+        return Certificate(self._client, child_url)

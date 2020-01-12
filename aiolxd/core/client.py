@@ -3,9 +3,8 @@ from json import dumps
 from json import loads
 from pathlib import Path
 
+from aiolxd.core.config import Config
 from aiolxd.end_points.api import Api
-
-from .config import Config
 
 
 class Client:
@@ -35,6 +34,7 @@ class Client:
 
         self._session = self.config.get_session()
 
+    @property
     def api(self):
         """Return the api root endpoint."""
         return Api(self)
@@ -70,12 +70,12 @@ class Client:
             response.raise_for_status()
             return loads(json)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Client':
         """Enter the client context."""
         await self._session.__aenter__()
         return self
 
-    async def __aexit__(self, exception_type, exception, traceback):
+    async def __aexit__(self, exception_type, exception, traceback) -> None:
         """Exit the client context.
 
         Will release the aiohttp ClientSession.

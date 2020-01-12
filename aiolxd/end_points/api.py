@@ -9,10 +9,12 @@ class Api(ApiObject):
 
     url = '/1.0'
 
+    @property
     def certificates(self):
         """Get the certificates endpoint of the api."""
         return Certificates(self._client)
 
+    @property
     def containers(self):
         """Get the container endpoint of the api."""
         return Containers(self._client)
