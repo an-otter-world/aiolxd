@@ -10,7 +10,7 @@ pylint:
   run: true
   disable:
     - too-few-public-methods
-    - line-too-long
+    - line-too-long # Already checked by pep8
     - too-many-arguments
 
 mccabe:
@@ -19,6 +19,7 @@ mccabe:
 pep257:
   run: true
   disable:
+    - D102
     - D203
     - D213
     - D407
@@ -26,6 +27,8 @@ pep257:
 pep8:
   options:
     max-line-length: 80
+  disable:
+    - E261
 
 pyflakes:
   run: true
@@ -34,3 +37,11 @@ pyflakes:
 
 pyroma:
   run: true
+
+mypy:
+  run: true
+  options:
+    ignore-missing-imports: true
+    strict: true
+  allow:
+    untyped-decorators

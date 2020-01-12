@@ -1,5 +1,4 @@
 """1.0/certificates/* LXD API endpoint & objects."""
-from contextlib import asynccontextmanager
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 

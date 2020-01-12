@@ -1,28 +1,40 @@
 """Unit tests for aiolxd client."""
 from pathlib import Path
-from json import dumps
-from json import loads
-from asyncio import iscoroutine
+from typing import Any
+from typing import Awaitable
+from typing import Callable
+from typing import Dict
+from typing import Union
+
+from aresponses import ResponsesMockServer
 
 from pytest import fixture
 from pytest import mark
-from pytest import yield_fixture
 
 from aiolxd import Client
 
+from tests.helpers import ApiMock
+
 _MOCK_HOST = 'lxd'
 
+ResponseDict = Dict[str, Any]
+ResponseHandler = Callable[
+    [ResponseDict],
+    Union[ResponseDict, Awaitable[ResponseDict]]
+]
+ResponseData = Union[ResponseDict, ResponseHandler]
 
-@fixture
-def datadir():
+
+@fixture # type: ignore
+def datadir() -> Path:
     """Return the data directory containing various files usefull for tests."""
     return Path(__file__).parent / 'data'
 
 
-@yield_fixture
-@mark.asyncio
+@fixture # type: ignore
+@mark.asyncio # type: ignore
 # pylint: disable=redefined-outer-name
-async def lxdclient(datadir):
+async def lxdclient(datadir: Path) -> Client:
     """Fixture returning a correctly initalized aiolxd client."""
     async with Client(
             verify_host_certificate=False,
@@ -33,61 +45,7 @@ async def lxdclient(datadir):
         yield client
 
 
-@fixture
-def api_mock(aresponses):
-    """Return an _AResponseWrapper easing api mocks declaration."""
-    return _AResponseWrapper(aresponses)
-
-
-class _AResponseWrapper:
-    def __init__(self, aresponses):
-        self._aresponses = aresponses
-
-    def raw_handler(self, url, method, response, match_querystring=False):
-        """Add a new mock handler or response for the given url & method."""
-        self._aresponses.add(
-            _MOCK_HOST,
-            url,
-            method,
-            response,
-            match_querystring=match_querystring
-        )
-
-    def __call__(self, method, url, response, sync=True):
-        if callable(response):
-            response = self._response_wrapper(response, sync)
-        else:
-            response = dumps({
-                'type': 'sync' if sync else 'async',
-                'metadata': response
-            })
-        self.raw_handler(
-            url,
-            method,
-            response
-        )
-
-    def _response_wrapper(self, handler, sync):
-        async def _handler(request):
-            content = await request.content.read()
-
-            if not isinstance(content, str):
-                content = content.decode('utf-8')
-
-            if content:
-                content = loads(content)
-            else:
-                content = None
-
-            result = handler(content)
-            if iscoroutine(result):
-                result = await result
-
-            return self._aresponses.Response(
-                status=200,
-                text=dumps({
-                    'type': 'sync' if sync else 'async',
-                    'metadata': result
-                })
-            )
-        return _handler
+@fixture # type: ignore
+def api_mock(aresponses: ResponsesMockServer) -> 'ApiMock':
+    """Return an ApiMock easing api mocks declaration."""
+    return ApiMock(aresponses)

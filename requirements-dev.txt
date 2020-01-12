@@ -1,6 +1,7 @@
 -r requirements.txt
 aiounittest
 aresponses
+mypy
 prospector
 pyroma
 pytest

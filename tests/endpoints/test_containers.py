@@ -1,10 +1,16 @@
 """Certificates LXD endpoint unit tests."""
 from asyncio import Future
+from typing import Dict
+from typing import Awaitable
 
 from pytest import mark
 from aiohttp.web import WebSocketResponse
+from aiohttp.web import BaseRequest
 from aiohttp import WSMsgType
 
+from aiolxd import Client
+
+from tests.helpers import ApiMock
 
 @mark.asyncio
 async def test_container_exec(lxdclient, api_mock):
@@ -63,7 +69,9 @@ async def test_container_exec_websockets(lxdclient, api_mock):
 
 
 @mark.asyncio
-async def test_container_exec_partial_websockets(lxdclient, api_mock):
+async def test_container_exec_partial_websockets(
+    lxdclient: Client,
+    api_mock: ApiMock):
     """Check that exec with only one stdin / stdout / stderr handler work."""
     _mock_exec_websockets(api_mock)
 
@@ -98,7 +106,7 @@ def _mock_exec_websockets(api_mock):
     exec_done = Future()
     operation_url = '/1.0/operations/{}'.format(operation_id)
 
-    async def _ws_handler(request):
+    async def _ws_handler(request: BaseRequest) -> None:
         # We re-add the handler, as they are removed when queried by the mock
         # library
         secret = request.query['secret']
@@ -129,7 +137,7 @@ def _mock_exec_websockets(api_mock):
         if len(websockets) == 4:
             exec_done.set_result(None)
 
-    async def _wait_handler(_):
+    async def _wait_handler(_: Dict[str, object]) -> Dict[str, object]:
         await exec_done
         for socket in websockets:
             await socket.close()

@@ -71,7 +71,7 @@ async def test_index_error(lxdclient, api_mock):
             del collection['bad_item']
 
 
-def _mock_collection_endpoint(api_mock):
+def _mock_collection_endpoint(api_mock) -> None:
     api_mock('get', '/', ['/object_1', '/object_2'])
     api_mock('get', '/object_1', {'name': 'object_1'})
     api_mock('get', '/object_2', {'name': 'object_2'})
