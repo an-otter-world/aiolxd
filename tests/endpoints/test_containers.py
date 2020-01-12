@@ -15,7 +15,7 @@ async def test_container_exec(lxdclient, api_mock):
     data = {}
     api_mock('post', '/1.0/containers/test/exec', data.update)
 
-    async with lxdclient.api().containers() as containers:
+    async with lxdclient.api.containers as containers:
         async with containers['test'] as test:
             await test.exec(
                 ['dummy', 'command'],
@@ -51,7 +51,7 @@ async def test_container_exec_websockets(lxdclient, api_mock):
     async def _stderr_handler(data):
         assert data.decode('utf-8') == 'stderr_data'
 
-    async with lxdclient.api().containers() as containers:
+    async with lxdclient.api.containers as containers:
         async with containers['test'] as test:
             await test.exec(
                 ['dummy', 'command'],
@@ -70,7 +70,7 @@ async def test_container_exec_partial_websockets(lxdclient, api_mock):
     async def _stdout_handler(data):
         assert data.decode('utf-8') == 'stdout_data'
 
-    async with lxdclient.api().containers() as containers:
+    async with lxdclient.api.containers as containers:
         async with containers['test'] as test:
             await test.exec(
                 ['dummy', 'command'],

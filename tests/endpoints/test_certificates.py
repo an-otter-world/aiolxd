@@ -14,13 +14,13 @@ async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
     api_mock('get', '/1.0/certificates/' + dummy_sha, {})
     api_mock('post', '/1.0/certificates', post_data.update)
 
-    certificates = lxdclient.api().certificates()
+    certificates = lxdclient.api.certificates
 
-    async with certificates.add(cert_path=dummy_path):
-        assert post_data == {
-            'type': 'client',
-            'cert': dummy_cert,
-        }
+    await certificates.add(cert_path=dummy_path)
+    assert post_data == {
+        'type': 'client',
+        'cert': dummy_cert,
+    }
 
 
 @mark.asyncio
@@ -32,16 +32,16 @@ async def test_add_client_certificate(lxdclient, api_mock, datadir):
     api_mock('get', '/1.0/certificates/' + default_sha, {})
     api_mock('post', '/1.0/certificates', post_data.update)
 
-    certificates = lxdclient.api().certificates()
+    certificates = lxdclient.api.certificates
 
     # Checks client certificate is chosen if no path is provided
-    async with certificates.add(password='password', name='default'):
-        assert post_data == {
-            'type': 'client',
-            'name': 'default',
-            'cert': default_cert,
-            'password': 'password'
-        }
+    await certificates.add(password='password', name='default')
+    assert post_data == {
+        'type': 'client',
+        'name': 'default',
+        'cert': default_cert,
+        'password': 'password'
+    }
 
 
 def _load_cert(cert_path):
