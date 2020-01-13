@@ -5,22 +5,11 @@ from pytest import mark
 
 
 @mark.asyncio
-async def test_add_certificate_by_path(lxdclient, api_mock, datadir):
+async def test_add_certificate_by_path(lxd, datadir):
     """Checks add certificate works."""
     dummy_path = datadir / 'dummy.crt'
-    (dummy_sha, dummy_cert) = _load_cert(dummy_path)
-    post_data = {}
-
-    api_mock('get', '/1.0/certificates/' + dummy_sha, {})
-    api_mock('post', '/1.0/certificates', post_data.update)
-
-    certificates = lxdclient.api.certificates
-
+    certificates = lxd.api.certificates
     await certificates.add(cert_path=dummy_path)
-    assert post_data == {
-        'type': 'client',
-        'cert': dummy_cert,
-    }
 
 
 @mark.asyncio

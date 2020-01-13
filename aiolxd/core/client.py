@@ -1,7 +1,13 @@
 """HTTP client class & related utilities."""
+from typing import Optional
+
+from aiohttp import ClientSession
+from aiohttp import TCPConnector
 from json import dumps
 from json import loads
 from pathlib import Path
+from ssl import CERT_NONE
+from ssl import SSLContext
 
 from aiolxd.core.config import Config
 from aiolxd.end_points.api import Api
@@ -10,12 +16,13 @@ from aiolxd.end_points.api import Api
 class Client:
     """The LXD HTTP client."""
 
-    def __init__(self,
+    def __init__(
+        self,
         base_url: str,
         verify_host_certificate: bool = True,
-        client_key: Path = None,
-        client_cert: Path = None
-    ):
+        client_key: Optional[Path] = None,
+        client_cert: Optional[Path] = None
+    ) -> None:
         """Initialize the client.
 
         Args:
@@ -25,21 +32,24 @@ class Client:
             client_cert: Client certificate cert path.
 
         """
-        self.config = Config(
-            base_url=base_url,
+        self._base_url = base_url
+        connector = self._get_connector(
             verify_host_certificate=verify_host_certificate,
             client_key=client_key,
             client_cert=client_cert
         )
-
-        self._session = self.config.get_session()
+        self._session = self._get_session(connector)
 
     @property
-    def api(self):
+    def api(self) -> Api:
         """Return the api root endpoint."""
         return Api(self)
 
-    async def connect_websocket(self, operation_id, secret):
+    async def connect_websocket(
+        self,
+        operation_id: str,
+        secret: str
+    ):
         """Connect to an operation websocket."""
         url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
         url = url_format.format(
@@ -58,7 +68,7 @@ class Client:
             data (Object): Data as a python object to send with the request.
 
         """
-        url = '%s%s' % (self.config.base_url, url)
+        url = self._get_url(url)
         json_data = None
         if data is not None:
             json_data = dumps(data)
@@ -85,3 +95,32 @@ class Client:
             exception,
             traceback
         )
+
+    @staticmethod
+    def _get_connector(
+        verify_host_certificate: bool,
+        client_key: Optional[Path],
+        client_cert: Optional[Path]
+    ) -> TCPConnector:
+        """Return an aiohttp ClientSession based on the options."""
+        ssl_context = SSLContext()
+
+        if not verify_host_certificate:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = CERT_NONE
+
+        cert = client_cert
+        key = client_key
+        if cert is not None:
+            ssl_context.load_cert_chain(cert, key)
+
+        return TCPConnector(ssl=ssl_context)
+
+    def _get_session(self, connector: TCPConnector) -> ClientSession:
+        return ClientSession(
+            connector=connector,
+        )
+
+    def _get_url(self, endpoint):
+        return '%s%s' % (self._base_url, endpoint)
+

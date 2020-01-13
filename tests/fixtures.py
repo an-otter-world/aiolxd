@@ -12,6 +12,7 @@ from pytest import fixture
 from pytest import mark
 
 from aiolxd import Client
+from aiolxd.test_utils import TestClient
 
 from tests.helpers import ApiMock
 
@@ -49,3 +50,9 @@ async def lxdclient(datadir: Path) -> Client:
 def api_mock(aresponses: ResponsesMockServer) -> 'ApiMock':
     """Return an ApiMock easing api mocks declaration."""
     return ApiMock(aresponses)
+
+@fixture()
+@mark.asyncio
+async def lxd():
+    async with TestClient() as client:
+        yield client

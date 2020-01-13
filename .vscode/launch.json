@@ -10,7 +10,8 @@
             "type": "python",
             "request": "launch",
             "module": "pytest",
-            "args": ["--no-cov"]
+            "args": ["--no-cov"],
+            "justMyCode": false
         },
     ]
 }
