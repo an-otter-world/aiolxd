@@ -23,7 +23,7 @@ async def test_add_client_certificate() -> None:
 async def test_add_certificate(datadir: Path) -> None:
     """Adding a certificate by path should work."""
     async with TestApi() as api:
-        cert_path = datadir / 'cert.crt'
+        cert_path = datadir / 'certificate.pem'
         (sha, _) = _load_cert(cert_path)
         async with api.certificates as certificates:
             await certificates.add(password='password', cert_path=cert_path)
