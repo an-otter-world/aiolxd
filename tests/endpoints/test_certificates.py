@@ -10,19 +10,26 @@ from aiolxd.test_utils.test_api import TestApi
 
 
 @mark.asyncio # type: ignore
-async def test_add_certificate_by_path(lxd_api: TestApi, shared_datadir: Path) \
-        -> None:
-    """Checks add certificate works."""
-    dummy_path = shared_datadir / 'dummy.crt'
-    certificates = lxd_api.certificates
-    await certificates.add(cert_path=dummy_path)
+async def test_add_client_certificate() -> None:
+    """Adding a certificate without a path should add the client one."""
+    api = TestApi()
+    async with api:
+        assert api.auth == 'untrusted'
+        await api.certificates.add(password='password')
+        assert api.auth == 'trusted'
 
 
 @mark.asyncio # type: ignore
-async def test_add_client_certificate(lxd_api: TestApi) -> None:
-    """Add certificate without path should add the client certificate."""
-    certificates = lxd_api.certificates
-    await certificates.add(password='password', name='default')
+async def test_add_certificate(datadir: Path) -> None:
+    """Adding a certificate by path should work."""
+    async with TestApi() as api:
+        cert_path = datadir / 'cert.crt'
+        (sha, _) = _load_cert(cert_path)
+        async with api.certificates as certificates:
+            await certificates.add(password='password', cert_path=cert_path)
+            assert sha in certificates
+            async with certificates[sha] as cert:
+                assert cert.name == 'cert_name'
 
 
 def _load_cert(cert_path: Path) -> Tuple[str, str]:
