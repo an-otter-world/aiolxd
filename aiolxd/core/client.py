@@ -16,7 +16,7 @@ from aiohttp import TCPConnector
 
 
 class Client:
-    """The LXD HTTP client."""
+    """HTTP client in top of aiolxd, providing some LXD specific helpers."""
 
     def __init__(
         self,
@@ -34,23 +34,34 @@ class Client:
             client_cert: Client certificate cert path.
 
         """
+        ssl_context = SSLContext()
+
+        if not verify_host_certificate:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = CERT_NONE
+
+        if client_cert is not None and client_key is not None:
+            ssl_context.load_cert_chain(client_cert, client_key)
+
+        self._session = ClientSession(
+            connector=TCPConnector(ssl=ssl_context),
+        )
         self._base_url = base_url
         self.client_cert = client_cert
-        connector = self._get_connector(
-            verify_host_certificate=verify_host_certificate,
-            client_key=client_key,
-            client_cert=client_cert
-        )
-        self._session = ClientSession(
-            connector=connector,
-        )
 
     async def connect_websocket(
         self,
         operation_id: str,
         secret: str
     ) -> ClientWebSocketResponse:
-        """Connect to an operation websocket."""
+        """Connect to an operation websocket.
+
+        Args:
+            operation_id: Id of the async operation (see LXD API
+                          documentation).
+            secret: Websocket secret (see LXD API documentation).
+
+        """
         url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
         url = url_format.format(
             base_url=self._base_url,
@@ -68,9 +79,9 @@ class Client:
         """Query the lxd api.
 
         Args:
-            url (str): The relative url to query.
-            method (str): HTTP method to use.
-            data (Object): Data as a python object to send with the request.
+            url: The relative url to query.
+            method: HTTP method to use (get, post, put...).
+            data: Data as a python object to send with the request.
 
         """
         url = '%s%s' % (self._base_url, url)
@@ -105,23 +116,3 @@ class Client:
             exception,
             traceback
         )
-
-    @staticmethod
-    def _get_connector(
-        verify_host_certificate: bool,
-        client_key: Optional[Path],
-        client_cert: Optional[Path]
-    ) -> TCPConnector:
-        """Return an aiohttp ClientSession based on the options."""
-        ssl_context = SSLContext()
-
-        if not verify_host_certificate:
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = CERT_NONE
-
-        cert = client_cert
-        key = client_key
-        if cert is not None:
-            ssl_context.load_cert_chain(cert, key)
-
-        return TCPConnector(ssl=ssl_context)
