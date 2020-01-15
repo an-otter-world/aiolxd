@@ -30,22 +30,6 @@ class ApiMock:
         """Initialize  ApiMock."""
         self._aresponses = aresponses
 
-    def raw_handler(
-        self,
-        url: str,
-        method: str,
-        response: ResponseData,
-        match_querystring: bool = False
-    ) -> None:
-        """Add a new mock handler or response for the given url & method."""
-        self._aresponses.add(
-            _MOCK_HOST,
-            url,
-            method,
-            response,
-            match_querystring=match_querystring
-        )
-
     def __call__(
         self,
         method: str,
@@ -60,10 +44,13 @@ class ApiMock:
                 'type': 'sync' if sync else 'async',
                 'metadata': response
             })
-        self.raw_handler(
+
+        self._aresponses.add(
+            _MOCK_HOST,
             url,
             method,
-            response
+            response,
+            match_querystring=False
         )
 
     def _response_wrapper(
