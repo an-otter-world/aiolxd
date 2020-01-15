@@ -10,7 +10,7 @@ from aiolxd.end_points.certificates import Certificates
 
 
 class Api(ApiObject):
-    """/1.0/containers LXD API end point."""
+    """/1.0/ LXD API end point."""
 
     url = '/1.0'
 
@@ -21,14 +21,21 @@ class Api(ApiObject):
         client_key: Optional[Path] = None,
         client_cert: Optional[Path] = None
     ) -> None:
-        """Initialize Api."""
-        self._client = Client(
+        """Initialize the api endpoint.
+
+        Args:
+            base_url: Base LXD API url.
+            verify_host_certificate: Weither to authenticate LXD host or not.
+            client_key: Client certificate key path.
+            client_cert: Client certificate cert path.
+
+        """
+        super().__init__(Client(
             base_url=base_url,
             verify_host_certificate=verify_host_certificate,
             client_cert=client_cert,
             client_key=client_key
-        )
-        super().__init__(self._client)
+        ))
 
     @property
     def certificates(self) -> Certificates:
@@ -36,7 +43,10 @@ class Api(ApiObject):
         return Certificates(self._client)
 
     async def __aenter__(self) -> 'Api':
-        """Enters a context."""
+        """Enters the API context.
+
+        Will initialize the HTTP session.
+        """
         await self._client.__aenter__()
         return self
 
@@ -46,7 +56,10 @@ class Api(ApiObject):
         exception: Optional[Exception],
         traceback: Optional[TracebackType]
     ) -> bool:
-        """Exit a context."""
+        """Exit the API context.
+
+        Will release the HTTP session.
+        """
         await self._client.__aexit__(exception_type, exception, traceback)
         if exception_type is None:
             await self._save()
