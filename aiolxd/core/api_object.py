@@ -1,5 +1,11 @@
 """LXD object abstraction end point."""
-from .end_point import EndPoint
+from typing import Any
+from typing import Dict
+from typing import Optional
+from typing import Set
+
+from aiolxd.core.client import Client
+from aiolxd.core.end_point import EndPoint
 
 
 class ApiObject(EndPoint):
@@ -21,9 +27,9 @@ class ApiObject(EndPoint):
 
     """
 
-    readonly_fields = {}
+    readonly_fields: Set[str] = set()
 
-    def __init__(self, client, url=None):
+    def __init__(self, client: Client, url: Optional[str] = None) -> None:
         """Initialize this ApiObject.
 
         Args:
@@ -32,14 +38,14 @@ class ApiObject(EndPoint):
 
         """
         super().__init__(client, url)
-        self._api_data = {}
+        self._api_data: Dict[str, Any] = {}
         self._is_dirty = False
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Return a property that was loaded from the LXD API."""
         return self._api_data[name]
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """Set an API attribute on this object.
 
         If the object was deleted, or if the property is readonly, it will
@@ -54,14 +60,14 @@ class ApiObject(EndPoint):
 
         super().__setattr__(name, value)
 
-    async def _load(self):
+    async def _load(self) -> None:
         self._api_data = await self._query('get')
 
-    async def _save(self):
+    async def _save(self) -> None:
         if not self._is_dirty:
             return
 
-        writable_data = {}
+        writable_data: Dict[str, Any] = {}
         for key, value in self._api_data.items():
             if key not in self.readonly_fields:
                 writable_data[key] = value

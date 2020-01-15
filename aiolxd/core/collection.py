@@ -1,9 +1,20 @@
 """Collection endpoint module."""
-from .end_point import EndPoint
-from .api_object import ApiObject
+from typing import AsyncIterator
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import TypeVar
+from typing import cast
+
+from aiolxd.core.api_object import ApiObject
+from aiolxd.core.client import Client
+from aiolxd.core.end_point import EndPoint
 
 
-class Collection(EndPoint):
+Child = TypeVar('Child', bound=ApiObject)
+
+
+class Collection(Generic[Child], EndPoint):
     """Endpoint containing child objects.
 
     For example /1.0/certificates, or /1.0/containers. The object can be
@@ -22,7 +33,7 @@ class Collection(EndPoint):
 
     child_class = ApiObject
 
-    def __init__(self, client, url=None):
+    def __init__(self, client: Client, url: Optional[str] = None) -> None:
         """Initialize this collection.
 
         Args:
@@ -31,14 +42,14 @@ class Collection(EndPoint):
 
         """
         super().__init__(client, url)
-        self._children = []
-        self._deleted_children = []
+        self._children: List[str] = []
+        self._deleted_children: List[str] = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of objects in this collection."""
         return len(self._children)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Child:
         """Return a child object.
 
         Children are accessed by name, not urls. So to access a container, you
@@ -50,9 +61,9 @@ class Collection(EndPoint):
         child_url = self._child_url(key)
         if child_url not in self._children:
             raise IndexError()
-        return self.child_class(self._client, child_url)
+        return cast(Child, self.child_class(self._client, child_url))
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         """Schedule a children for deletion.
 
         The child object will effectively be deleted at the next _save call.
@@ -65,25 +76,25 @@ class Collection(EndPoint):
         self._children.remove(child_url)
         self._deleted_children.append(child_url)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """Check the collection owns the given children."""
         child_url = self._child_url(key)
         return child_url in self._children
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> AsyncIterator[Child]:
         """Asynchronous iteration on children method."""
         for url in self._children:
             async with self.child_class(self._client, url) as child:
-                yield child
+                yield cast(Child, child)
 
-    async def _load(self):
+    async def _load(self) -> None:
         self._children = await self._query('get')
         print(self._children)
 
-    async def _save(self):
+    async def _save(self) -> None:
         for child in self._deleted_children:
             await self._client.query('delete', child, {})
         self._deleted_children = []
 
-    def _child_url(self, name):
+    def _child_url(self, name: str) -> str:
         return '%s/%s' % (self.url, name)

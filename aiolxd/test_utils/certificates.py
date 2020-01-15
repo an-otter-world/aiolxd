@@ -1,23 +1,22 @@
 """Certificate endpoint mock."""
-
-from aiohttp.web import View
 from aiohttp.web import Response
-from aiohttp.web import json_response
-from aiohttp.web import HTTPBadRequest
 
 from aiolxd.test_utils.lxd_view import LxdView
 
 
 class CertificatesView(LxdView):
-    async def get(self):
-        pass
+    """Mock certificates view."""
 
-    async def post(self):
+    async def get(self) -> None:
+        """Post method for mock certificates view."""
+
+    async def post(self) -> Response:
+        """Post method for mock certificates view."""
         data = await self.request.json()
-        if not 'type' in data:
+        if 'type' not in data:
             return self.error('Type is mandatory')
 
-        if not 'certificate' in data:
+        if 'certificate' not in data:
             pass
 
         return self.response(None)

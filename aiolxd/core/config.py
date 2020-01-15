@@ -1,6 +1,8 @@
 """LXD client config class & utilities."""
 from ssl import CERT_NONE
 from ssl import SSLContext
+from typing import Any
+
 from aiohttp import ClientSession
 from aiohttp import TCPConnector
 
@@ -22,7 +24,7 @@ class Config:
     client_cert = None
     client_key = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         """Initialize the config.
 
         Args:
@@ -32,7 +34,7 @@ class Config:
         """
         self.__dict__.update(**kwargs)
 
-    def get_session(self):
+    def get_session(self) -> ClientSession:
         """Return an aiohttp ClientSession based on the options."""
         ssl_context = SSLContext()
 

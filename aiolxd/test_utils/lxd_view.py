@@ -3,7 +3,9 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import cast
 
+from aiohttp.web import Response
 from aiohttp.web import View
 from aiohttp.web import json_response
 
@@ -19,13 +21,13 @@ class LxdView(View):
         app = self.request.app
         if 'certificates' not in app:
             app['certificates'] = []
-        return app['certificates']
+        return cast(List[Certificate], app['certificates'])
 
     @staticmethod
     def response(
         metadata: Optional[Dict[str, Any]] = None,
         sync: bool = True,
-    ):
+    ) -> Response:
         """Get the response for given parameters."""
         return json_response({
             'type': 'sync' if sync else 'async',
@@ -41,7 +43,7 @@ class LxdView(View):
     def error(
         message: str,
         status_code: int = 400,
-    ):
+    ) -> Response:
         """Get an error response."""
         return json_response(
             {

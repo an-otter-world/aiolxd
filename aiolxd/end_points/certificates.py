@@ -1,4 +1,7 @@
 """1.0/certificates/* LXD API endpoint & objects."""
+from pathlib import Path
+from typing import Optional
+
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 
@@ -15,13 +18,18 @@ class Certificate(ApiObject):
     }
 
 
-class Certificates(Collection):
+class Certificates(Collection[Certificate]):
     """/1.0/certificates LXD API end point."""
 
     url = '/1.0/certificates'
     child_class = Certificate
 
-    async def add(self, password=None, cert_path=None, name=None):
+    async def add(
+        self,
+        password: Optional[str] = None,
+        cert_path: Optional[Path] = None,
+        name: Optional[str] = None
+    ) -> Certificate:
         """Add a trusted certificate to the server.
 
         https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10certificates
@@ -40,8 +48,9 @@ class Certificates(Collection):
         }
 
         if cert_path is None:
-            cert_path = self._client.config.client_cert
+            cert_path = self._client.client_cert
 
+        assert cert_path is not None
         with open(cert_path, 'rb') as cert_file:
             cert_string = cert_file.read().decode('utf-8')
             cert = load_certificate(FILETYPE_PEM, cert_string)
@@ -53,7 +62,7 @@ class Certificates(Collection):
             data['name'] = name
 
         if password is not None:
-            data['password'] = password
+            data['password'] = str(password)
 
         await self._query('post', data)
 

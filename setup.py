@@ -8,7 +8,7 @@ from subprocess import check_output
 from setuptools import setup
 
 
-def get_git_version():
+def get_git_version() -> str:
     """Get package version from git tags."""
     pattern = re_compile(
         r'^v(?P<version>\d*\.\d*\.\d*)(-\d*-g(?P<commit>\d*))?'
@@ -19,16 +19,19 @@ def get_git_version():
             '--tags',
             '--match', 'v[0-9]*.[0-9]*.[0-9]*'
         ]
-        version = check_output(command, stderr=DEVNULL)
-        version = version.decode('utf-8')
+        version_bytes = check_output(command, stderr=DEVNULL)
+        version = version_bytes.decode('utf-8')
         match = pattern.match(version)
-        commit = match.group('commit')
-        version = match.group('version')
-        if commit is not None:
-            version = '{}.dev{}'.format(version, commit)
+        if match is not None:
+            commit = match.group('commit')
+            version = match.group('version')
+            if commit is not None:
+                version = '{}.dev{}'.format(version, commit)
+            return version.rstrip()
     except CalledProcessError:
-        version = '0.0.0'
-    return version.rstrip()
+        pass
+
+    return '0.0.0'
 
 
 setup(
