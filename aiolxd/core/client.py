@@ -23,7 +23,9 @@ class Client:
         base_url: str,
         verify_host_certificate: bool = True,
         client_key: Optional[Path] = None,
-        client_cert: Optional[Path] = None
+        client_cert: Optional[Path] = None,
+        ca_file: Optional[Path] = None,
+        ca_path: Optional[Path] = None,
     ) -> None:
         """Initialize the client.
 
@@ -32,6 +34,10 @@ class Client:
             verify_host_certificate: Weither to authenticate LXD host or not.
             client_key: Client certificate key path.
             client_cert: Client certificate cert path.
+            ca_file: Certificate authority file to use when validating the host
+                     certificate.
+            ca_path: Certificate authority directory to use when validating the
+                     host certificate.
 
         """
         self._session = ClientSession(
@@ -40,6 +46,8 @@ class Client:
                     key=client_key,
                     certificate=client_cert,
                     verify=verify_host_certificate,
+                    ca_file=ca_file,
+                    ca_path=ca_path
                 )
             ),
         )

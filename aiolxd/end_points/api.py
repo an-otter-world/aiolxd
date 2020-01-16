@@ -19,7 +19,9 @@ class Api(ApiObject):
         base_url: str,
         verify_host_certificate: bool = True,
         client_key: Optional[Path] = None,
-        client_cert: Optional[Path] = None
+        client_cert: Optional[Path] = None,
+        ca_file: Optional[Path] = None,
+        ca_path: Optional[Path] = None,
     ) -> None:
         """Initialize the api endpoint.
 
@@ -28,13 +30,19 @@ class Api(ApiObject):
             verify_host_certificate: Weither to authenticate LXD host or not.
             client_key: Client certificate key path.
             client_cert: Client certificate cert path.
+            ca_file: Certificate authority file to use when validating the host
+                     certificate.
+            ca_path: Certificate authority directory to use when validating the
+                     host certificate.
 
         """
         super().__init__(Client(
             base_url=base_url,
             verify_host_certificate=verify_host_certificate,
             client_cert=client_cert,
-            client_key=client_key
+            client_key=client_key,
+            ca_file=ca_file,
+            ca_path=ca_path,
         ))
 
     @property
