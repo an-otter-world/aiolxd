@@ -23,11 +23,11 @@ ResponseHandler = Callable[
 ResponseData = Union[ResponseDict, ResponseHandler]
 
 
-class ApiMock:
+class HttpMock:
     """Wrapper around aresponse to ease a bit our use cases."""
 
     def __init__(self, aresponses: ResponsesMockServer) -> None:
-        """Initialize  ApiMock."""
+        """Initialize  HttpMock."""
         self._aresponses = aresponses
 
     def __call__(

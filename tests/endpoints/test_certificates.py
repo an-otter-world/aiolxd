@@ -6,13 +6,12 @@ from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 from pytest import mark
 
-from aiolxd.test_utils.test_api import TestApi
+from aiolxd.end_points.api import Api
 
 
 @mark.asyncio # type: ignore
-async def test_add_client_certificate() -> None:
+async def test_add_client_certificate(api: Api) -> None:
     """Adding a certificate without a path should add the client one."""
-    api = TestApi()
     async with api:
         assert api.auth == 'untrusted'
         await api.certificates.add(password='password')
@@ -20,16 +19,15 @@ async def test_add_client_certificate() -> None:
 
 
 @mark.asyncio # type: ignore
-async def test_add_certificate(datadir: Path) -> None:
+async def test_add_certificate(api: Api, datadir: Path) -> None:
     """Adding a certificate by path should work."""
-    async with TestApi() as api:
-        cert_path = datadir / 'certificate.pem'
-        (sha, _) = _load_cert(cert_path)
-        async with api.certificates as certificates:
-            await certificates.add(password='password', cert_path=cert_path)
-            assert sha in certificates
-            async with certificates[sha] as cert:
-                assert cert.name == 'cert_name'
+    cert_path = datadir / 'certificate.pem'
+    (sha, _) = _load_cert(cert_path)
+    async with api.certificates as certificates:
+        await certificates.add(password='password', cert_path=cert_path)
+        assert sha in certificates
+        async with certificates[sha] as cert:
+            assert cert.name == 'cert_name'
 
 
 def _load_cert(cert_path: Path) -> Tuple[str, str]:

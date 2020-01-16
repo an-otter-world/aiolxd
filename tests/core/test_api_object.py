@@ -7,13 +7,13 @@ from pytest import mark
 from aiolxd.core.api_object import ApiObject
 from aiolxd.core.client import Client
 
-from tests.mocks.api_mock import ApiMock
+from tests.mocks.http_mock import HttpMock
 
 
 @mark.asyncio # type: ignore
-async def test_load_properties(lxd_client: Client, api_mock: ApiMock) -> None:
+async def test_load_properties(lxd_client: Client, http_mock: HttpMock) -> None:
     """Checks using with on an api object loads it's properties."""
-    api_mock('get', '/', {
+    http_mock('get', '/', {
         'property_1': 'String property',
         'property_2': True
     })
@@ -24,16 +24,16 @@ async def test_load_properties(lxd_client: Client, api_mock: ApiMock) -> None:
 
 
 @mark.asyncio # type: ignore
-async def test_save_properties(lxd_client: Client, api_mock: ApiMock) -> None:
+async def test_save_properties(lxd_client: Client, http_mock: HttpMock) -> None:
     """Checks iterating an collection end point returns it's children."""
     saved: Dict[str, Any] = {}
 
-    api_mock('get', '/', {
+    http_mock('get', '/', {
         'property_1': '',
         'property_2': ''
     })
 
-    api_mock('put', '/', saved.update)
+    http_mock('put', '/', saved.update)
 
     async with ApiObject(lxd_client, '/') as obj:
         obj.property_1 = 'Wrote value'

@@ -2,8 +2,6 @@
 from json import dumps
 from json import loads
 from pathlib import Path
-from ssl import CERT_NONE
-from ssl import SSLContext
 from types import TracebackType
 from typing import Any
 from typing import Dict
@@ -13,6 +11,8 @@ from typing import Type
 from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
 from aiohttp import TCPConnector
+
+from aiolxd.core.ssl import get_ssl_context
 
 
 class Client:
@@ -34,17 +34,14 @@ class Client:
             client_cert: Client certificate cert path.
 
         """
-        ssl_context = SSLContext()
-
-        if not verify_host_certificate:
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = CERT_NONE
-
-        if client_cert is not None and client_key is not None:
-            ssl_context.load_cert_chain(client_cert, client_key)
-
         self._session = ClientSession(
-            connector=TCPConnector(ssl=ssl_context),
+            connector=TCPConnector(
+                ssl=get_ssl_context(
+                    key=client_key,
+                    certificate=client_cert,
+                    verify=verify_host_certificate,
+                )
+            ),
         )
         self._base_url = base_url
         self.client_cert = client_cert

@@ -9,21 +9,21 @@ from aiolxd.core.client import Client
 from aiolxd.core.api_object import ApiObject
 from aiolxd.core.collection import Collection
 
-from tests.mocks.api_mock import ApiMock
+from tests.mocks.http_mock import HttpMock
 
 
 @mark.asyncio # type: ignore
-async def test_collection_delete(lxd_client: Client, api_mock: ApiMock) \
+async def test_collection_delete(lxd_client: Client, http_mock: HttpMock) \
         -> None:
     """Checks that in operator works on collections."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     deleted = {'value': False}
 
     def _handler(_: Dict[str, Any]) -> Dict[str, Any]:
         deleted['value'] = True
         return {}
 
-    api_mock('delete', '/object_1', _handler)
+    http_mock('delete', '/object_1', _handler)
     async with Collection[ApiObject](lxd_client, '') as collection:
         del collection['object_1']
 
@@ -31,10 +31,10 @@ async def test_collection_delete(lxd_client: Client, api_mock: ApiMock) \
 
 
 @mark.asyncio # type: ignore
-async def test_collection_get_item(lxd_client: Client, api_mock: ApiMock) \
+async def test_collection_get_item(lxd_client: Client, http_mock: HttpMock) \
         -> None:
     """Checks accessing a collection children works."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     collection: Collection[ApiObject] = Collection(lxd_client, '')
     async with collection:
         async with collection['object_1'] as child:
@@ -42,20 +42,20 @@ async def test_collection_get_item(lxd_client: Client, api_mock: ApiMock) \
 
 
 @mark.asyncio # type: ignore
-async def test_collection_in(lxd_client: Client, api_mock: ApiMock) \
+async def test_collection_in(lxd_client: Client, http_mock: HttpMock) \
         -> None:
     """Checks that in operator works on collections."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     async with Collection[ApiObject](lxd_client, '') as collection:
         assert 'object_1' in collection
         assert 'object_2' in collection
 
 
 @mark.asyncio # type: ignore
-async def test_collection_iterate(lxd_client: Client, api_mock: ApiMock) \
+async def test_collection_iterate(lxd_client: Client, http_mock: HttpMock) \
         -> None:
     """Checks iterating an collection end point returns it's children."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     async with Collection[ApiObject](lxd_client, '') as collection:
         names = [it.name async for it in collection]
         assert names[0] == 'object_1'
@@ -63,17 +63,17 @@ async def test_collection_iterate(lxd_client: Client, api_mock: ApiMock) \
 
 
 @mark.asyncio # type: ignore
-async def test_collection_len(lxd_client: Client, api_mock: ApiMock) -> None:
+async def test_collection_len(lxd_client: Client, http_mock: HttpMock) -> None:
     """Checks len operator works on collections."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     async with Collection[ApiObject](lxd_client, '') as collection:
         assert len(collection) == 2
 
 
 @mark.asyncio # type: ignore
-async def test_index_error(lxd_client: Client, api_mock: ApiMock) -> None:
+async def test_index_error(lxd_client: Client, http_mock: HttpMock) -> None:
     """Checks len operator works on collections."""
-    _mock_collection_endpoint(api_mock)
+    _mock_collection_endpoint(http_mock)
     async with Collection[ApiObject](lxd_client, '') as collection:
         with raises(IndexError):
             # pylint: disable=pointless-statement
@@ -83,7 +83,7 @@ async def test_index_error(lxd_client: Client, api_mock: ApiMock) -> None:
             del collection['bad_item']
 
 
-def _mock_collection_endpoint(api_mock: ApiMock) -> None:
-    api_mock('get', '/', ['/object_1', '/object_2'])
-    api_mock('get', '/object_1', {'name': 'object_1'})
-    api_mock('get', '/object_2', {'name': 'object_2'})
+def _mock_collection_endpoint(http_mock: HttpMock) -> None:
+    http_mock('get', '/', ['/object_1', '/object_2'])
+    http_mock('get', '/object_1', {'name': 'object_1'})
+    http_mock('get', '/object_2', {'name': 'object_2'})

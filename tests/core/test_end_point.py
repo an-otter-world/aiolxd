@@ -6,7 +6,7 @@ from pytest import mark
 from aiolxd.core.client import Client
 from aiolxd.core.end_point import EndPoint
 
-from tests.mocks.api_mock import ApiMock
+from tests.mocks.http_mock import HttpMock
 
 
 class _TestEndPoint(EndPoint):
@@ -27,12 +27,12 @@ class _TestEndPoint(EndPoint):
 @mark.asyncio # type: ignore
 async def test_request_methods(
     lxd_client: Client,
-    api_mock: ApiMock
+    http_mock: HttpMock
 ) -> None:
     """Checks client request methods works."""
     data = {'yodeldi': 'dildedido'}
-    api_mock('get', '/', 'This is a get')
-    api_mock('post', '/', lambda request_data: request_data)
+    http_mock('get', '/', 'This is a get')
+    http_mock('post', '/', lambda request_data: request_data)
 
     endpoint = _TestEndPoint(lxd_client, '/')
     result = await endpoint.query('get')

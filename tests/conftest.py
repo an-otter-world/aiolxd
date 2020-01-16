@@ -7,14 +7,24 @@ from pytest import fixture
 from pytest import mark
 
 from aiolxd.core.client import Client
+from aiolxd.end_points.api import Api
+from aiolxd.test_utils.api_mock import api_mock
 
-from tests.mocks.api_mock import ApiMock
+from tests.mocks.http_mock import HttpMock
 
 
 @fixture # type: ignore
-def api_mock(aresponses: ResponsesMockServer) -> 'ApiMock':
-    """Return an ApiMock easing api mocks declaration."""
-    return ApiMock(aresponses)
+def http_mock(aresponses: ResponsesMockServer) -> HttpMock:
+    """Return an HttpMock easing api mocks declaration."""
+    return HttpMock(aresponses)
+
+
+@fixture # type: ignore
+@mark.asyncio # type: ignore
+async def api() -> AsyncGenerator[Api, Api]:
+    """Fixture providing a mocking LXD API."""
+    async with api_mock() as lxd_api:
+        yield lxd_api
 
 
 @fixture # type: ignore
