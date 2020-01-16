@@ -15,7 +15,8 @@ async def test_add_client_certificate(api: Api) -> None:
     async with api:
         assert api.auth == 'untrusted'
         await api.certificates.add(password='password')
-        assert api.auth == 'trusted'
+        async with api:
+            assert api.auth == 'trusted'
 
 
 @mark.asyncio # type: ignore

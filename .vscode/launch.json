@@ -11,6 +11,9 @@
             "request": "launch",
             "module": "pytest",
             "args": ["--no-cov"],
+            "env": {
+                "AIOLXD_TEST_SERVER": "https://localhost:8443"
+            },
             "justMyCode": false
         },
     ]
