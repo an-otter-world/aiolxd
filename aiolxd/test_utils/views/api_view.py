@@ -1,5 +1,4 @@
 """Certificate endpoint mock."""
-from aiohttp.web import json_response
 from aiohttp.web import Response
 
 from aiolxd.test_utils.lxd_view import LxdView
@@ -10,7 +9,7 @@ class ApiView(LxdView):
 
     async def get(self) -> Response:
         """Get method."""
-        return json_response({
+        return self.response({
             'api_extensions': [],
             'api_status': 'stable',
             'api_version': '1.0',

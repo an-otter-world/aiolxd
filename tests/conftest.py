@@ -25,7 +25,7 @@ def http_mock(aresponses: ResponsesMockServer) -> HttpMock:
 @mark.asyncio # type: ignore
 async def api() -> AsyncGenerator[Api, Api]:
     """Fixture providing a mocking LXD API."""
-    server_env_key='AIOLXD_TEST_SERVER'
+    server_env_key = 'AIOLXD_TEST_SERVER'
     if server_env_key not in environ:
         async with api_mock() as lxd_api:
             yield lxd_api
