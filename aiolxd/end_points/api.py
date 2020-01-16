@@ -48,10 +48,15 @@ class Api(ApiObject):
     @property
     def certificates(self) -> Certificates:
         """Get the certificates endpoint of the api."""
-        return Certificates(self._client)
+        return Certificates(self, self._client)
+
+    @property
+    def client(self) -> Client:
+        """Get the HTTP client."""
+        return self._client
 
     async def __aenter__(self) -> 'Api':
-        """Enters the API context.
+        """Enter the API context.
 
         Will initialize the HTTP session.
         """

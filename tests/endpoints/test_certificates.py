@@ -7,15 +7,26 @@ from OpenSSL.crypto import load_certificate
 from pytest import mark
 
 from aiolxd.end_points.api import Api
+from aiolxd.end_points.certificates import get_digest
 
 
 @mark.asyncio # type: ignore
 async def test_add_client_certificate(api: Api) -> None:
     """Adding a certificate without a path should add the client one."""
+    assert api.client.client_cert is not None
+    with open(api.client.client_cert, 'r') as cert_file:
+        client_cert = cert_file.read()
+    client_cert_digest = get_digest(client_cert)
+
     async with api:
         assert api.auth == 'untrusted'
         await api.certificates.add(password='password')
-        async with api:
+
+        async with api.certificates as certificates:
+            assert client_cert_digest in certificates
+            async with certificates[client_cert_digest] as new_cert:
+                assert new_cert.certificate == client_cert
+                assert new_cert.fingerprint == client_cert_digest
             assert api.auth == 'trusted'
 
 

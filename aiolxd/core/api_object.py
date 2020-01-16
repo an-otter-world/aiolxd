@@ -60,7 +60,8 @@ class ApiObject(EndPoint):
 
         super().__setattr__(name, value)
 
-    async def _load(self) -> None:
+    async def refresh(self) -> None:
+        """Refresh the object data by querying the lxd Api."""
         self._api_data = await self._query('get')
 
     async def _save(self) -> None:

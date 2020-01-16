@@ -1,12 +1,14 @@
 """1.0/certificates/* LXD API endpoint & objects."""
 from pathlib import Path
 from typing import Optional
+from typing import cast
 
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 
-from aiolxd.core.collection import Collection
 from aiolxd.core.api_object import ApiObject
+from aiolxd.core.client import Client
+from aiolxd.core.collection import Collection
 
 
 class Certificate(ApiObject):
@@ -24,6 +26,24 @@ class Certificates(Collection[Certificate]):
     url = '/1.0/certificates'
     child_class = Certificate
 
+    def __init__(
+        self,
+        parent: ApiObject,
+        client: Client,
+        url: Optional[str] = None
+    ) -> None:
+        """Initialize the certificates end point.
+
+        Args:
+            parent: The Api ApiObject, needed to refresh the trusted field when
+                    a certificate is added.
+            client (aiolxd.Client): The LXD API client.
+            url (str): This endpoint url, relative to base_url.
+
+        """
+        super().__init__(client=client, url=url)
+        self._parent = parent
+
     async def add(
         self,
         password: Optional[str] = None,
@@ -36,11 +56,10 @@ class Certificates(Collection[Certificate]):
 
         If cert_path is None, the current client certificate will be added.
 
-        Parameter
-        ---------
-        password : String The server trust password.
-        cert_path : String Path to the public certificate.
-        name : String Name for this certificate.
+        Args:
+            password : The server trust password.
+            cert_path : Path to the public certificate.
+            name : Name for this certificate.
 
         """
         data = {
@@ -53,9 +72,7 @@ class Certificates(Collection[Certificate]):
         assert cert_path is not None
         with open(cert_path, 'rb') as cert_file:
             cert_string = cert_file.read().decode('utf-8')
-            cert = load_certificate(FILETYPE_PEM, cert_string)
-            sha1 = cert.digest('sha256').decode('utf-8')
-            sha1 = sha1.replace(':', '').lower()
+            sha1 = get_digest(cert_string)
             data['cert'] = cert_string
 
         if name is not None:
@@ -65,6 +82,25 @@ class Certificates(Collection[Certificate]):
             data['password'] = str(password)
 
         await self._query('post', data)
+        # Update certificates
+        await self.refresh()
+
+        # Update api trusted field
+        await self._parent.refresh()
 
         child_url = '%s/%s' % (self.url, sha1)
+        assert sha1 in self
+
         return Certificate(self._client, child_url)
+
+
+def get_digest(cert_string: str) -> str:
+    """Return the sha-256 digest of the certificate.
+
+    Args:
+        cert_string: Certificate in PEM format.
+
+    """
+    cert = load_certificate(FILETYPE_PEM, cert_string)
+    digest = cert.digest('sha256').decode('utf-8')
+    return cast(str, digest.replace(':', '').lower())

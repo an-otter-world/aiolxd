@@ -17,7 +17,7 @@ class _TestEndPoint(EndPoint):
         """
         return await self._query(method, data)
 
-    async def _load(self) -> None:
+    async def refresh(self) -> None:
         pass
 
     async def _save(self) -> None:

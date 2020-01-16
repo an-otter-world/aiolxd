@@ -15,6 +15,19 @@ from OpenSSL.crypto import dump_certificate
 from OpenSSL.crypto import dump_privatekey
 
 
+class Certificate:
+    """Mock certificate data."""
+
+    def __init__(self, cert: str, name: str):
+        """Initialize Certificate."""
+        self.cert = cert
+        self.name = name
+
+    @property
+    def digest(self) -> str:
+        """Return the SHA-256 digest of the certificate."""
+
+
 @contextmanager
 def get_temp_certificate() -> Iterator[Tuple[Path, Path]]:
     """Return a pair (key, cert) of a self-signed generated certificate.

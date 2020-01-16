@@ -17,7 +17,7 @@ class EndPoint:
     """Represent an api endpoint, wrapping HTTP requests.
 
     Members:
-        url (str): The url of the endpoint, relative to base_url.
+        url: The url of the endpoint, relative to base_url.
 
     """
 
@@ -39,7 +39,7 @@ class EndPoint:
 
     async def __aenter__(self: Self) -> Self:
         """Enters a context."""
-        await self._load()
+        await self.refresh()
         return self
 
     async def __aexit__(
@@ -54,7 +54,7 @@ class EndPoint:
         return False
 
     @abstractmethod
-    async def _load(self) -> None:
+    async def refresh(self) -> None:
         """Load data from the api.
 
         Generally used at the beginning of a context manager.

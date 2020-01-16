@@ -9,8 +9,8 @@ from pytest import mark
 
 from aiolxd.core.client import Client
 from aiolxd.end_points.api import Api
-from aiolxd.test_utils.api_mock import api_mock
-from aiolxd.test_utils.misc import get_temp_certificate
+from aiolxd.test_utils import api_mock
+from aiolxd.test_utils.common.certificates import get_temp_certificate
 
 from tests.mocks.http_mock import HttpMock
 

@@ -87,9 +87,8 @@ class Collection(Generic[Child], EndPoint):
             async with self.child_class(self._client, url) as child:
                 yield cast(Child, child)
 
-    async def _load(self) -> None:
+    async def refresh(self) -> None:
         self._children = await self._query('get')
-        print(self._children)
 
     async def _save(self) -> None:
         for child in self._deleted_children:
