@@ -1,6 +1,6 @@
 """Certificate endpoint mock."""
-from typing import cast
-from ssl import SSLObject
+from aiohttp.web import json_response
+from aiohttp.web import Response
 
 from aiolxd.test_utils.lxd_view import LxdView
 
@@ -8,10 +8,18 @@ from aiolxd.test_utils.lxd_view import LxdView
 class ApiView(LxdView):
     """Mock view for the /1.0 end point of the LXD API."""
 
-    async def get(self) -> None:
+    async def get(self) -> Response:
         """Get method."""
-        transport = self.request.transport
-        assert transport is not None
-        ssl_object = cast(SSLObject, transport.get_extra_info('ssl_object'))
-        peer_cert = ssl_object.getpeercert(binary_form=True)
-        print(peer_cert)
+        return json_response({
+            'api_extensions': [],
+            'api_status': 'stable',
+            'api_version': '1.0',
+            'auth': 'trusted' if self._is_client_trusted() else 'untrusted',
+            'config': {
+                'core.trust_password': True,
+                'core.https_address': '[::]:8443'
+            },
+            'environment': {
+            },
+            'public': False,
+        })
