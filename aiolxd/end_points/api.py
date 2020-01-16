@@ -48,6 +48,7 @@ class Api(ApiObject):
         Will initialize the HTTP session.
         """
         await self._client.__aenter__()
+        await super().__aenter__()
         return self
 
     async def __aexit__(
@@ -60,6 +61,7 @@ class Api(ApiObject):
 
         Will release the HTTP session.
         """
+        await super().__aexit__(exception_type, exception, traceback)
         await self._client.__aexit__(exception_type, exception, traceback)
         if exception_type is None:
             await self._save()
