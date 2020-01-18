@@ -65,7 +65,7 @@ class BaseView(View):
 
     @staticmethod
     def response(
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Any] = None,
         sync: bool = True,
     ) -> Response:
         """Get the response for given parameters."""

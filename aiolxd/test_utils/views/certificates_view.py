@@ -10,8 +10,11 @@ from aiolxd.test_utils.common.certificates import Certificate
 class CertificatesView(BaseView):
     """Mock certificates view."""
 
-    async def get(self) -> None:
+    async def get(self) -> Response:
         """Post method for mock certificates view."""
+        url_format = '/1.0/certificates/%s'
+        urls = [url_format % it.fingerprint for it in self.certificates]
+        return self.response(urls)
 
     async def post(self) -> Response:
         """Post method for mock certificates view."""
