@@ -15,11 +15,11 @@ from tests.mocks.http_mock import HttpMock
 
 
 class _TestObject(LXDObject):
-    url_pattern = r'/\w+'
+    url_pattern = r'^/\w+$'
 
 
 class _TestCollection(LXDCollection[_TestObject]):
-    url_pattern = r'/'
+    url_pattern = r'^/$'
 
 
 @fixture(name='lxd_collection') # type: ignore
@@ -34,7 +34,7 @@ async def _fixture_lxd_collection(http_mock: HttpMock) \
         'http://lxd',
         endpoint_classes=[_TestCollection, _TestObject]
     ) as client:
-        collection = client.get('/')
+        collection = await client.get('/')
         assert isinstance(collection, _TestCollection)
         yield collection
 
@@ -95,4 +95,4 @@ async def test_index_error(lxd_collection: _TestCollection) -> None:
         lxd_collection['bad_item']
 
     with raises(IndexError):
-        lxd_collection.delete('bad_item')
+        await lxd_collection.delete('bad_item')

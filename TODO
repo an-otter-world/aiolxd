@@ -1,9 +1,1 @@
- * Think about parametrizing endpoints urls, and allow get(EndpointType, **kwargs),
-   computing the endpoint url from the parameters, and returning the good object. 
-   To replace parameters : https://stackoverflow.com/questions/33634232/replace-named-group-in-regex-match
-   This would be more type-proof.
-   This would avoid having to pass a type collection to the client too, 
-   This would allow to remove the get(url) method, replacing it with get(EndPoint, parameters)
-   LLLOOOOL NOOO
- * Fix mypy
  * Fixs unit tests
