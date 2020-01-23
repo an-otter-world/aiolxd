@@ -20,23 +20,29 @@ class _TestObject(LXDObject):
 @mark.asyncio # type: ignore
 async def _fixture_lxd_object(http_mock: HttpMock) \
         -> AsyncGenerator[_TestObject, _TestObject]:
-    http_mock('get', '/', {
+    object_data = {
         'property_1': 'String property',
         'property_2': True
-    })
+    }
+
+    # As aresponse removes handler when they have been get, need
+    # to double it, so the object reload after saving returns
+    # data.
+    http_mock('get', '/', object_data)
+    http_mock('get', '/', object_data)
 
     async with LXDClient(
         'http://lxd',
         endpoint_classes=[_TestObject]
     ) as client:
-        obj = client.get('/')
+        obj = await client.get('/')
         assert isinstance(obj, _TestObject)
         yield obj
 
 
 @mark.asyncio # type: ignore
 async def test_load_properties(lxd_object: _TestObject) -> None:
-    """Checks using with on an api object loads it's properties."""
+    """LXD object should load property values from the underlying API."""
     assert lxd_object.property_1 == 'String property'
     assert lxd_object.property_2
 
@@ -46,7 +52,7 @@ async def test_save_properties(
     lxd_object: _TestObject,
     http_mock: HttpMock
 ) -> None:
-    """Checks iterating an collection end point returns it's children."""
+    """LXD object should save properties to the underlying API when edited."""
     saved: Dict[str, Any] = {}
     http_mock('put', '/', saved.update)
 

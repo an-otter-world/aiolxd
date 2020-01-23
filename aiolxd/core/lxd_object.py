@@ -66,6 +66,7 @@ class LXDObject(LXDEndpoint):
                  LXD client base url.
 
         """
+        super().__init__()
         self._client = client
         self._url = url
         self._api_data: Dict[str, Any] = {}
@@ -90,10 +91,11 @@ class LXDObject(LXDEndpoint):
                 raise RuntimeError(
                     'Please use edit() method to modify an ApiObject'
                 )
+        super().__setattr__(name, value)
 
     async def _load(self) -> None:
         """Refresh the object data by querying LXD."""
-        self._api_data = await self._client.query(self._url, 'get')
+        self._api_data = await self._client.query('get', self._url)
 
     @asynccontextmanager
     async def edit(self) -> AsyncGenerator[_EditContext, _EditContext]:

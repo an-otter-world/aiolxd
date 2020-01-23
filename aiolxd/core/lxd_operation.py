@@ -168,4 +168,4 @@ class LXDOperation:
             body = await response.read()
             json = body.decode('utf-8')
             response.raise_for_status()
-            return cast(Dict[str, Any], loads(json)['metadata'])
+            return cast(Dict[str, Any], loads(json))
