@@ -6,13 +6,14 @@ from typing import cast
 from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import load_certificate
 
-from aiolxd.core.api_object import ApiObject
-from aiolxd.core.client import Client
-from aiolxd.core.collection import Collection
+from aiolxd.core.lxd_object import LXDObject
+from aiolxd.core.lxd_collection import LXDCollection
 
 
-class Certificate(ApiObject):
-    """/1.0/certificates/{sha256} LXD API object."""
+class Certificate(LXDObject):
+    """/1.0/certificates/{sha256} object wrapper."""
+
+    url_pattern = r'^/1.0/certificates/[A-Fa-f0-9]{64}$'
 
     readonly_fields = {
         'fingerprint',
@@ -20,29 +21,10 @@ class Certificate(ApiObject):
     }
 
 
-class Certificates(Collection[Certificate]):
-    """/1.0/certificates LXD API end point."""
+class Certificates(LXDCollection[Certificate]):
+    """/1.0/certificates collection wrapper."""
 
-    url = '/1.0/certificates'
-    child_class = Certificate
-
-    def __init__(
-        self,
-        parent: ApiObject,
-        client: Client,
-        url: Optional[str] = None
-    ) -> None:
-        """Initialize the certificates end point.
-
-        Args:
-            parent: The Api ApiObject, needed to refresh the trusted field when
-                    a certificate is added.
-            client (aiolxd.Client): The LXD API client.
-            url (str): This endpoint url, relative to base_url.
-
-        """
-        super().__init__(client=client, url=url)
-        self._parent = parent
+    url_pattern = r'^/1.0/certificates$'
 
     async def add(
         self,
@@ -57,9 +39,9 @@ class Certificates(Collection[Certificate]):
         If cert_path is None, the current client certificate will be added.
 
         Args:
-            password : The server trust password.
-            cert_path : Path to the public certificate.
-            name : Name for this certificate.
+            password: The server trust password.
+            cert_path: Path to the public certificate.
+            name: Name for this certificate.
 
         """
         data = {
@@ -72,7 +54,7 @@ class Certificates(Collection[Certificate]):
         assert cert_path is not None
         with open(cert_path, 'rb') as cert_file:
             cert_string = cert_file.read().decode('utf-8')
-            sha1 = get_digest(cert_string)
+            fingerprint = get_digest(cert_string)
             data['cert'] = cert_string
 
         if name is not None:
@@ -81,17 +63,13 @@ class Certificates(Collection[Certificate]):
         if password is not None:
             data['password'] = str(password)
 
-        await self._query('post', data)
+        await self._client.query('post', self._url, data)
         # Update certificates
-        await self.refresh()
+        await self._load()
 
-        # Update api trusted field
-        await self._parent.refresh()
-
-        child_url = '%s/%s' % (self.url, sha1)
-        assert sha1 in self
-
-        return Certificate(self._client, child_url)
+        # Pylint doesn't seems to correctly resolve BaseCollection __getitem___
+        # pylint: disable=unsubscriptable-object
+        return await self[fingerprint]
 
 
 def get_digest(cert_string: str) -> str:

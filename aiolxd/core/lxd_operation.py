@@ -1,6 +1,8 @@
 """Operation helpers."""
 from asyncio import Task
 from asyncio import wait
+from json import dumps
+from json import loads
 from typing import Any
 from typing import AsyncIterator
 from typing import Awaitable
@@ -8,48 +10,54 @@ from typing import Callable
 from typing import Coroutine
 from typing import Dict
 from typing import List
+from typing import Optional
+from typing import cast
 
-from aiohttp import WSMsgType
-from aiohttp import WSMessage
+from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
-
-from aiolxd.core.client import Client
+from aiohttp import WSMessage
+from aiohttp import WSMsgType
 
 ReadSocketHandler = Callable[[bytes], Awaitable[None]]
 WriteSocketHandler = Callable[[], AsyncIterator[bytes]]
 
 
-class Operation:
+class LXDOperation:
     """A LXD operation, either background or synchronous.
 
-    Allows to await the same way synchronous & asynchronous operations, and
-    handle websockets for operation creating some.
+    See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#10operations.
+    This class is awaitable, and allows to make an LXD request the same way for
+    sync and async operations. It can be subclassed if websockets must be
+    readen / writen during the operation. (See Container.exec for an exemple).
     """
 
     def __init__(
         self,
-        client: Client,
+        session: ClientSession,
         method: str,
+        base_url: str,
         url: str,
-        data: Dict[str, Any]
+        data: Optional[Dict[str, Any]]
     ):
         """Initialize this operation.
 
         Args:
-            client (aiolxd.Client) : The LXD client.
-            method (str) : HTTP method (get, post, put, patch).
-            url (str) : The endpoint of this operation.
-            data (dict) : Parameters to send to this command.
+            session: aiohttp ClientSession to use to make requests.
+            method: HTTP method (get, post, put, patch).
+            base_url: Base url of LXD API.
+            url: The endpoint of this operation.
+            data: Parameters to send with post, put or path methods.
 
         """
-        self._client = client
+        self._session = session
         self._method = method
+        self._base_url = base_url
         self._url = url
         self._data = data
         self._id = None
 
     def __await__(self) -> Any:
-        """Await until this operation is terminated.
+        """Await until this LXD operation is terminated.
 
         Will return immediatly for synchronous LXD operations, will wait for
         the operation to finish in the case of an asynchronous one.
@@ -113,27 +121,51 @@ class Operation:
         # TODO : Implement some wrapper for control socket operation.
         await socket.close()
 
-    async def __process(self) -> Any:
-        result = await self._client.query(
-            self._method,
-            self._url,
-            self._data
-        )
+    async def __process(self) -> Dict[str, Any]:
+        result = await self.__query(self._method, self._url, self._data)
+
         if result['type'] == 'sync':
-            return result['metadata']
+            return cast(Dict[str, Any], result['metadata'])
 
         if result['type'] == 'async':
             metadata = result['metadata']
             jobs = self._get_jobs(metadata)
+            self._id = metadata['id']
+
             tasks = [Task(it) for it in jobs]
 
-            self._id = metadata['id']
             wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
-            result = await self._client.query('get', wait_url)
+            result_data = await self.__query('get', wait_url)
             await wait(tasks)
 
-        return result['metadata']
+        return cast(Dict[str, Any], result_data['metadata'])
 
     async def __connect_websocket(self, secret: str) -> ClientWebSocketResponse:
         assert self._id is not None
-        return await self._client.connect_websocket(self._id, secret)
+        url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
+        url = url_format.format(
+            base_url=self._base_url,
+            id=self._id,
+            secret=secret
+        )
+        return await self._session.ws_connect(url)
+
+    async def __query(
+        self,
+        method: str,
+        url: str,
+        data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = None
+        if data is not None:
+            json_data = dumps(data)
+
+        url = '{base_url}{url}'.format(base_url=self._base_url, url=url)
+
+        request = self._session.request(method, url, data=json_data)
+
+        async with request as response:
+            body = await response.read()
+            json = body.decode('utf-8')
+            response.raise_for_status()
+            return cast(Dict[str, Any], loads(json)['metadata'])

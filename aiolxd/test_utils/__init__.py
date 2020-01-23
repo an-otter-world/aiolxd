@@ -6,7 +6,8 @@ from aiohttp.test_utils import TestServer
 from aiohttp.web import Application
 from aiohttp.web import view
 
-from aiolxd.core.ssl import get_ssl_context
+from aiolxd import lxd_api
+from aiolxd.core.utils import get_ssl_context
 from aiolxd.end_points.api import Api
 from aiolxd.test_utils.common.certificates import get_temp_certificate
 from aiolxd.test_utils.views.api_view import ApiView
@@ -32,7 +33,7 @@ async def api_mock() -> AsyncGenerator[Api, Api]:
             )
 
             base_url = 'https://%s:%s' % (server.host, server.port)
-            async with Api(
+            async with lxd_api(
                 base_url=base_url,
                 verify_host_certificate=False,
                 client_key=client_key,

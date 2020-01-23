@@ -7,7 +7,7 @@ from aresponses import ResponsesMockServer
 from pytest import fixture
 from pytest import mark
 
-from aiolxd.core.client import Client
+from aiolxd import lxd_api
 from aiolxd.end_points.api import Api
 from aiolxd.test_utils import api_mock
 from aiolxd.test_utils.common.certificates import get_temp_certificate
@@ -27,27 +27,17 @@ async def api() -> AsyncGenerator[Api, Api]:
     """Fixture providing a mocking LXD API."""
     server_env_key = 'AIOLXD_TEST_SERVER'
     if server_env_key not in environ:
-        async with api_mock() as lxd_api:
-            yield lxd_api
+        async with api_mock() as api_object:
+            yield api_object
     else:
         with get_temp_certificate() as (client_key, client_cert):
-            async with Api(
+            async with lxd_api(
                 environ[server_env_key],
                 client_cert=client_cert,
                 client_key=client_key,
                 verify_host_certificate=False,
-            ) as lxd_api:
-                yield lxd_api
-
-
-@fixture # type: ignore
-@mark.asyncio # type: ignore
-async def lxd_client() -> AsyncGenerator[Client, Client]:
-    """Return a mock lxd_client used to run test against a mock api."""
-    async with Client(
-        'http://lxd',
-    ) as client:
-        yield client
+            ) as api_object:
+                yield api_object
 
 
 @fixture # type: ignore

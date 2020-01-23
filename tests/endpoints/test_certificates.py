@@ -12,27 +12,29 @@ from aiolxd.end_points.certificates import get_digest
 async def test_certificate_add_delete(api: Api, datadir: Path) -> None:
     """Certificates end point should allow to add and delete certificates."""
     assert api.auth == 'untrusted'
+    await api.trust_client_certificate(password='password')
+    assert api.auth == 'trusted'
+
     certificates = await api.certificates()
 
+    assert api.client.client_cert is not None
     with open(api.client.client_cert, 'r') as cert_file:
         client_cert = cert_file.read()
     client_cert_digest = get_digest(client_cert)
 
     # Add current client certificate for authentication.
-    await certificates.add(password='password')
-    assert api.auth == 'trusted'
     assert client_cert_digest in certificates
 
     digest, pem, path = _load_test_certificate(datadir)
     await certificates.add(cert_path=path, name='test_name')
     assert digest in certificates
 
-    test_cert = await certificates.get(digest)
+    test_cert = await certificates[digest]
     assert test_cert.fingerprint == digest
     assert test_cert.name == 'test_name'
     assert test_cert.certificate == pem
 
-    await certificates.remove(digest)
+    await certificates.delete(digest)
     assert digest not in certificates
 
 
