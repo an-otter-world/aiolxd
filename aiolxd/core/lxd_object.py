@@ -8,7 +8,7 @@ from typing import Set
 from typing import Iterator
 
 from aiolxd.core.lxd_client import LXDClient
-from aiolxd.core.lxd_client import LXDEndpoint
+from aiolxd.core.lxd_endpoint import LXDEndpoint
 
 
 class _EditContext:

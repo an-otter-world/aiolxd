@@ -12,7 +12,7 @@ from typing import Type
 from typing import AsyncGenerator
 
 from aiolxd.core.lxd_client import LXDClient
-from aiolxd.core.lxd_client import LXDEndpoint
+from aiolxd.core.lxd_endpoint import LXDEndpoint
 from aiolxd.end_points.api import Api
 from aiolxd.end_points.certificates import Certificate
 from aiolxd.end_points.certificates import Certificates

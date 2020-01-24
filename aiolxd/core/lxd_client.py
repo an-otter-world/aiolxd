@@ -1,6 +1,4 @@
 """HTTP client class & related utilities."""
-from abc import ABC
-from abc import abstractmethod
 from pathlib import Path
 from re import match
 from types import TracebackType
@@ -15,22 +13,8 @@ from aiohttp import ClientSession
 from aiohttp import TCPConnector
 
 from aiolxd.core.lxd_operation import LXDOperation
+from aiolxd.core.lxd_endpoint import LXDEndpoint
 from aiolxd.core.utils import get_ssl_context
-
-
-class LXDEndpoint(ABC):
-    """Base class for LXD API endpoint abstractions.
-
-    Members:
-        url_pattern: Regex pattern matching the url(s) for this endpoint type.
-
-    """
-
-    url_pattern: str
-
-    @abstractmethod
-    async def _load(self) -> None:
-        raise NotImplementedError()
 
 
 EndPointType = TypeVar('EndPointType', bound=LXDEndpoint)

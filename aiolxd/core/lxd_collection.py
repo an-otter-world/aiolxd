@@ -9,7 +9,7 @@ from typing import cast
 from urllib.parse import urlparse
 
 from aiolxd.core.lxd_client import LXDClient
-from aiolxd.core.lxd_client import LXDEndpoint
+from aiolxd.core.lxd_endpoint import LXDEndpoint
 from aiolxd.core.lxd_object import LXDObject
 
 
