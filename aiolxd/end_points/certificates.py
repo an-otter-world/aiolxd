@@ -1,13 +1,11 @@
 """1.0/certificates/* LXD API endpoint & objects."""
 from pathlib import Path
 from typing import Optional
-from typing import cast
-
-from OpenSSL.crypto import FILETYPE_PEM
-from OpenSSL.crypto import load_certificate
 
 from aiolxd.core.lxd_object import LXDObject
 from aiolxd.core.lxd_collection import LXDCollection
+
+from aiolxd.core.utils import get_digest
 
 
 class Certificate(LXDObject):
@@ -70,15 +68,3 @@ class Certificates(LXDCollection[Certificate]):
         # Pylint doesn't seems to correctly resolve BaseCollection __getitem___
         # pylint: disable=unsubscriptable-object
         return await self[fingerprint]
-
-
-def get_digest(cert_string: str) -> str:
-    """Return the sha-256 digest of the certificate.
-
-    Args:
-        cert_string: Certificate in PEM format.
-
-    """
-    cert = load_certificate(FILETYPE_PEM, cert_string)
-    digest = cert.digest('sha256').decode('utf-8')
-    return cast(str, digest.replace(':', '').lower())

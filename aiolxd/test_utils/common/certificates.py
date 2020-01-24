@@ -14,6 +14,8 @@ from OpenSSL.crypto import X509
 from OpenSSL.crypto import dump_certificate
 from OpenSSL.crypto import dump_privatekey
 
+from aiolxd.core.utils import get_digest
+
 
 class Certificate:
     """Mock certificate data."""
@@ -24,8 +26,9 @@ class Certificate:
         self.name = name
 
     @property
-    def digest(self) -> str:
+    def fingerprint(self) -> str:
         """Return the SHA-256 digest of the certificate."""
+        return get_digest(self.cert)
 
 
 @contextmanager

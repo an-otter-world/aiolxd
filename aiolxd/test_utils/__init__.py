@@ -12,6 +12,7 @@ from aiolxd.end_points.api import Api
 from aiolxd.test_utils.common.certificates import get_temp_certificate
 from aiolxd.test_utils.views.api_view import ApiView
 from aiolxd.test_utils.views.certificates_view import CertificatesView
+from aiolxd.test_utils.views.certificates_view import CertificateView
 
 
 @asynccontextmanager
@@ -49,6 +50,7 @@ def _get_mock_application() -> Application:
     app = Application()
     app.add_routes([
         view('/1.0', ApiView),
-        view('/1.0/certificates', CertificatesView)
+        view('/1.0/certificates', CertificatesView),
+        view('/1.0/certificates/{fingerprint}', CertificateView)
     ])
     return app

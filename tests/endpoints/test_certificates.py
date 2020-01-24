@@ -4,15 +4,17 @@ from typing import Tuple
 
 from pytest import mark
 
+from aiolxd.core.utils import get_digest
 from aiolxd.end_points.api import Api
-from aiolxd.end_points.certificates import get_digest
 
 
 @mark.asyncio # type: ignore
 async def test_certificate_add_delete(api: Api, datadir: Path) -> None:
     """Certificates end point should allow to add and delete certificates."""
     assert api.auth == 'untrusted'
-    await api.trust_client_certificate(password='password')
+    certificates = await api.certificates()
+
+    await certificates.add(password='password')
     assert api.auth == 'trusted'
 
     certificates = await api.certificates()

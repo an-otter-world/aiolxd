@@ -6,14 +6,17 @@ from typing import List
 from typing import Optional
 from typing import cast
 
-from OpenSSL.crypto import load_certificate
 from OpenSSL.crypto import FILETYPE_ASN1
+from OpenSSL.crypto import FILETYPE_PEM
 from OpenSSL.crypto import X509
+from OpenSSL.crypto import dump_certificate
+from OpenSSL.crypto import load_certificate
 from aiohttp.web import Response
 from aiohttp.web import View
 from aiohttp.web import json_response
 
 from aiolxd.test_utils.common.certificates import Certificate
+from aiolxd.core.utils import get_digest
 
 
 class BaseView(View):
@@ -54,11 +57,11 @@ class BaseView(View):
     @property
     def _is_client_trusted(self) -> bool:
         """Check if the current client certificate is trusted."""
-        peer_cert = self._peer_cert
-        peer_cert_digest = peer_cert.digest('sha256').decode('utf-8')
+        peer_cert = dump_certificate(FILETYPE_PEM, self._peer_cert).decode('utf-8')
+        fingerprint = get_digest(peer_cert)
 
         for certificate in self.certificates:
-            if certificate.digest == peer_cert_digest:
+            if certificate.fingerprint == fingerprint:
                 return True
 
         return False

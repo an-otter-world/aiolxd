@@ -7,11 +7,27 @@ from aiolxd.test_utils.views.base_view import BaseView
 from aiolxd.test_utils.common.certificates import Certificate
 
 
+class CertificateView(BaseView):
+    """Mock certificate info view."""
+
+    async def get(self) -> Response:
+        """Get method for mock certificates view."""
+        fingerprint = self.request.match_info.get('fingerprint')
+        for certificate in self.certificates:
+            if certificate.fingerprint == fingerprint:
+                return self.response({
+                    'type': 'client',
+                    'certificate': certificate.cert,
+                    'name': certificate.name,
+                    'fingerprint': certificate.fingerprint
+                })
+
+
 class CertificatesView(BaseView):
     """Mock certificates view."""
 
     async def get(self) -> Response:
-        """Post method for mock certificates view."""
+        """Get method for mock certificates view."""
         url_format = '/1.0/certificates/%s'
         urls = [url_format % it.fingerprint for it in self.certificates]
         return self.response(urls)
@@ -24,7 +40,7 @@ class CertificatesView(BaseView):
 
         cert = data.get(
             'certificate',
-            dump_certificate(FILETYPE_PEM, self._peer_cert)
+            dump_certificate(FILETYPE_PEM, self._peer_cert).decode('utf-8')
         )
 
         name = data.get('name', self._peer_name)

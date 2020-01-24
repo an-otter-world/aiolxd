@@ -9,6 +9,11 @@ from ssl import create_default_context
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import cast
+
+
+from OpenSSL.crypto import FILETYPE_PEM
+from OpenSSL.crypto import load_certificate
 
 
 def kwargs_to_lxd(**kwargs: Any) -> Dict[str, Any]:
@@ -69,3 +74,15 @@ def get_ssl_context(
         ssl_context.load_cert_chain(certificate, key)
 
     return ssl_context
+
+
+def get_digest(cert_string: str) -> str:
+    """Return the sha-256 digest of the certificate.
+
+    Args:
+        cert_string: Certificate in PEM format.
+
+    """
+    cert = load_certificate(FILETYPE_PEM, cert_string)
+    digest = cert.digest('sha256').decode('utf-8')
+    return cast(str, digest.replace(':', '').lower())
