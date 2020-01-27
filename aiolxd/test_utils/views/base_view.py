@@ -57,7 +57,10 @@ class BaseView(View):
     @property
     def _is_client_trusted(self) -> bool:
         """Check if the current client certificate is trusted."""
-        peer_cert = dump_certificate(FILETYPE_PEM, self._peer_cert).decode('utf-8')
+        peer_cert = dump_certificate(
+            FILETYPE_PEM,
+            self._peer_cert
+        ).decode('utf-8')
         fingerprint = get_digest(peer_cert)
 
         for certificate in self.certificates:

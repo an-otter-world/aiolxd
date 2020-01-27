@@ -5,6 +5,7 @@ from typing import Optional
 from aiolxd.core.lxd_object import LXDObject
 from aiolxd.core.lxd_collection import LXDCollection
 
+from aiolxd.core.lxd_client import LXDClient
 from aiolxd.core.utils import get_digest
 
 
@@ -42,18 +43,49 @@ class Certificates(LXDCollection[Certificate]):
             name: Name for this certificate.
 
         """
+        fingerprint = await self.add_certificate(
+            client=self._client,
+            cert_path=cert_path,
+            name=name,
+            password=password
+        )
+
+        # Update certificates
+        await self._load()
+
+        # Pylint doesn't seems to correctly resolve BaseCollection __getitem___
+        # pylint: disable=unsubscriptable-object
+        return await self[fingerprint]
+
+    @staticmethod
+    async def add_certificate(
+        client: LXDClient,
+        cert_path: Optional[Path] = None,
+        name: Optional[str] = None,
+        password: Optional[str] = None
+    ) -> str:
+        """Add a certificate to the trusted ones.
+
+        This method is usefull statically, as it can be used to add the
+        current client certificates when client isn't trusted, which would
+        raise errors if accessing endpoint needing trust.
+
+        Args:
+            client: The LXD client.
+            password: The server trust password.
+            cert_path: Path to the public certificate.
+            name: Name for this certificate.
+
+        """
         data = {
             'type': 'client',
         }
 
-        if cert_path is None:
-            cert_path = self._client.client_cert
-
-        assert cert_path is not None
-        with open(cert_path, 'rb') as cert_file:
-            cert_string = cert_file.read().decode('utf-8')
-            fingerprint = get_digest(cert_string)
-            data['cert'] = cert_string
+        if cert_path is not None:
+            with open(cert_path, 'rb') as cert_file:
+                cert_string = cert_file.read().decode('utf-8')
+                fingerprint = get_digest(cert_string)
+                data['certificate'] = cert_string
 
         if name is not None:
             data['name'] = name
@@ -61,10 +93,5 @@ class Certificates(LXDCollection[Certificate]):
         if password is not None:
             data['password'] = str(password)
 
-        await self._client.query('post', self._url, data)
-        # Update certificates
-        await self._load()
-
-        # Pylint doesn't seems to correctly resolve BaseCollection __getitem___
-        # pylint: disable=unsubscriptable-object
-        return await self[fingerprint]
+        await client.query('post', '/1.0/certificates', data)
+        return fingerprint

@@ -1,4 +1,8 @@
 """HTTP client class & related utilities."""
+from asyncio import Task
+from json import loads
+from logging import getLogger
+from logging import Logger
 from pathlib import Path
 from re import match
 from types import TracebackType
@@ -10,7 +14,9 @@ from typing import Type
 from typing import TypeVar
 
 from aiohttp import ClientSession
+from aiohttp import ClientWebSocketResponse
 from aiohttp import TCPConnector
+from aiohttp import WSMsgType
 
 from aiolxd.core.lxd_operation import LXDOperation
 from aiolxd.core.lxd_endpoint import LXDEndpoint
@@ -19,6 +25,10 @@ from aiolxd.core.utils import get_ssl_context
 
 EndPointType = TypeVar('EndPointType', bound=LXDEndpoint)
 
+
+_LXD_LEVEL_TO_LOG_MAPPING = {
+    'dbug': Logger.debug
+}
 
 class LXDClient:
     """HTTP client in top of aiolxd, providing some LXD specific helpers."""
@@ -62,6 +72,7 @@ class LXDClient:
                 )
             ),
         )
+        self._events_websocket: Optional[ClientWebSocketResponse] = None
         self.client_cert = client_cert
         self._endpoints: Dict[str, LXDEndpoint] = {}
 
@@ -123,6 +134,19 @@ class LXDClient:
             data=data
         )
 
+    async def listen_events(self) -> None:
+        """Listen the /1.0/events endpoint.
+
+        To log LXD events and automatically update the python wrapper when
+        the state changes.
+        """
+        assert self._events_websocket is None
+        url = '%s/1.0/events' % self._base_url
+        events_websocket = await self._session.ws_connect(url)
+        assert self._events_websocket is None
+        self._events_websocket = events_websocket
+        task = Task(self.__handle_events())
+
     async def __aenter__(self) -> 'LXDClient':
         """Enter the client context."""
         await self._session.__aenter__()
@@ -143,3 +167,30 @@ class LXDClient:
             exception,
             traceback
         )
+
+    async def __handle_events(self) -> None:
+        assert self._events_websocket is not None
+        while True:
+            message = await self._events_websocket.receive()
+            if message.type == WSMsgType.TEXT:
+                data = loads(message.data)
+                if data['type'] == 'logging':
+                    self.__log_lxd_message(data)
+                else:
+                    print(data)
+            elif (
+                message.type == WSMsgType.CLOSE or
+                message.type == WSMsgType.CLOSING or
+                message.type == WSMsgType.CLOSED
+            ):
+                break
+            else:
+                assert False
+
+    @staticmethod
+    def __log_lxd_message(data: Dict[str, Any]):
+        log = getLogger('aiolxd.lxd_server')
+        metadata = data['metadata']
+        message = metadata['message']
+        level = metadata['level']
+        _LXD_LEVEL_TO_LOG_MAPPING[level](log, message)

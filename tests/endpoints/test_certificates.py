@@ -12,20 +12,23 @@ from aiolxd.end_points.api import Api
 async def test_certificate_add_delete(api: Api, datadir: Path) -> None:
     """Certificates end point should allow to add and delete certificates."""
     assert api.auth == 'untrusted'
-    certificates = await api.certificates()
-
-    await certificates.add(password='password')
+    await api.authenticate(password='password')
     assert api.auth == 'trusted'
 
     certificates = await api.certificates()
 
-    assert api.client.client_cert is not None
-    with open(api.client.client_cert, 'r') as cert_file:
+    assert api._client.client_cert is not None
+    with open(api._client.client_cert, 'r') as cert_file:
         client_cert = cert_file.read()
     client_cert_digest = get_digest(client_cert)
 
     # Add current client certificate for authentication.
     assert client_cert_digest in certificates
+    async for cert in certificates:
+        if cert.fingerprint != client_cert_digest:
+            await certificates.delete(cert.fingerprint)
+
+    await certificates._load()
 
     digest, pem, path = _load_test_certificate(datadir)
     await certificates.add(cert_path=path, name='test_name')
