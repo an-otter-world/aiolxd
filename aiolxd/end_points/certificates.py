@@ -81,11 +81,19 @@ class Certificates(LXDCollection[Certificate]):
             'type': 'client',
         }
 
-        if cert_path is not None:
-            with open(cert_path, 'rb') as cert_file:
-                cert_string = cert_file.read().decode('utf-8')
-                fingerprint = get_digest(cert_string)
-                data['certificate'] = cert_string
+        if cert_path is None:
+            cert_path = client.client_cert
+
+        assert cert_path is not None
+
+        with open(cert_path, 'r') as cert_file:
+            certificate = cert_file.read()
+            fingerprint = get_digest(certificate)
+            # FIXME : LXD doesn't seems to accept that, a bug should be
+            # filled on the Github of LXD, after seeking for help on their
+            # forum. For now, only add_certificate without cert_path
+            # will work correctly.
+            # data['certificate'] = certificate
 
         if name is not None:
             data['name'] = name

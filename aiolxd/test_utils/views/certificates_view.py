@@ -22,6 +22,8 @@ class CertificateView(BaseView):
                     'fingerprint': certificate.fingerprint
                 })
 
+        return self.error('Not Found', 404)
+
 
 class CertificatesView(BaseView):
     """Mock certificates view."""

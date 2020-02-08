@@ -36,4 +36,4 @@ class Api(LXDObject):
     async def _load(self) -> None:
         await super()._load()
         if self.is_client_trusted:
-            await self._client.listen_events()
+            await self._client.handle_events()

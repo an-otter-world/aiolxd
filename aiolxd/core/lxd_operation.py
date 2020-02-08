@@ -167,5 +167,6 @@ class LXDOperation:
         async with request as response:
             body = await response.read()
             json = body.decode('utf-8')
+            result = cast(Dict[str, Any], loads(json))
             response.raise_for_status()
-            return cast(Dict[str, Any], loads(json))
+            return result

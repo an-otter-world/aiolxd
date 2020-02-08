@@ -1,8 +1,9 @@
 """HTTP client class & related utilities."""
 from asyncio import Task
+from asyncio import create_task
 from json import loads
-from logging import getLogger
 from logging import Logger
+from logging import getLogger
 from pathlib import Path
 from re import match
 from types import TracebackType
@@ -29,6 +30,7 @@ EndPointType = TypeVar('EndPointType', bound=LXDEndpoint)
 _LXD_LEVEL_TO_LOG_MAPPING = {
     'dbug': Logger.debug
 }
+
 
 class LXDClient:
     """HTTP client in top of aiolxd, providing some LXD specific helpers."""
@@ -75,6 +77,7 @@ class LXDClient:
         self._events_websocket: Optional[ClientWebSocketResponse] = None
         self.client_cert = client_cert
         self._endpoints: Dict[str, LXDEndpoint] = {}
+        self._handle_events_task: Optional[Task[None]] = None
 
     async def get(self, url: str) -> LXDEndpoint:
         """Return an API endpoint python abstraction.
@@ -134,7 +137,7 @@ class LXDClient:
             data=data
         )
 
-    async def listen_events(self) -> None:
+    async def handle_events(self) -> None:
         """Listen the /1.0/events endpoint.
 
         To log LXD events and automatically update the python wrapper when
@@ -145,7 +148,7 @@ class LXDClient:
         events_websocket = await self._session.ws_connect(url)
         assert self._events_websocket is None
         self._events_websocket = events_websocket
-        task = Task(self.__handle_events())
+        self._handle_events_task = create_task(self.__handle_events())
 
     async def __aenter__(self) -> 'LXDClient':
         """Enter the client context."""
@@ -162,6 +165,10 @@ class LXDClient:
 
         Will release the aiohttp ClientSession.
         """
+        if self._handle_events_task is not None:
+            assert self._events_websocket is not None
+            await self._events_websocket.close()
+            await self._handle_events_task
         return await self._session.__aexit__(
             exception_type,
             exception,
@@ -177,7 +184,7 @@ class LXDClient:
                 if data['type'] == 'logging':
                     self.__log_lxd_message(data)
                 else:
-                    print(data)
+                    assert False
             elif (
                 message.type == WSMsgType.CLOSE or
                 message.type == WSMsgType.CLOSING or
@@ -188,7 +195,7 @@ class LXDClient:
                 assert False
 
     @staticmethod
-    def __log_lxd_message(data: Dict[str, Any]):
+    def __log_lxd_message(data: Dict[str, Any]) -> None:
         log = getLogger('aiolxd.lxd_server')
         metadata = data['metadata']
         message = metadata['message']
