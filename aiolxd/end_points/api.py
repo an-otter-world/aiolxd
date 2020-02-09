@@ -1,20 +1,39 @@
 """Root lxd api endpoint."""
-from aiolxd.core.api_object import ApiObject
-from .containers import Containers
-from .certificates import Certificates
+from aiolxd.core.lxd_object import LXDObject
+from aiolxd.end_points.certificates import Certificates
 
 
-class Api(ApiObject):
-    """/1.0/containers LXD API end point."""
+class Api(LXDObject):
+    """/1.0/ LXD API end point."""
 
-    url = '/1.0'
+    url_pattern = r'^/1.0$'
+
+    async def certificates(self) -> Certificates:
+        """Get the certificates endpoint wrapper."""
+        certificates = await self._client.get('/1.0/certificates')
+        assert isinstance(certificates, Certificates)
+        return certificates
 
     @property
-    def certificates(self) -> Certificates:
-        """Get the certificates endpoint of the api."""
-        return Certificates(self._client)
+    def is_client_trusted(self) -> bool:
+        """Return true if the current client's certificate is trusted."""
+        return str(self.auth) == 'trusted'
 
-    @property
-    def containers(self) -> Containers:
-        """Get the container endpoint of the api."""
-        return Containers(self._client)
+    async def authenticate(self, password: str) -> None:
+        """Add the current client's certificate to trusted certificates.
+
+        Args:
+            password: The password configured as core.trust_password on the
+                      remote LXD instance.
+
+        """
+        await Certificates.add_certificate(
+            client=self._client,
+            password=password
+        )
+        await self.load()
+
+    async def load(self) -> None:
+        await super().load()
+        if self.is_client_trusted:
+            await self._client.handle_events()

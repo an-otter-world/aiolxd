@@ -1,77 +1,102 @@
 """Collection unit tests."""
+from typing import Any
+from typing import AsyncGenerator
+from typing import Dict
+
 from pytest import mark
 from pytest import raises
+from pytest import fixture
 
-from aiolxd.core import Collection
+from aiolxd.core.lxd_client import LXDClient
+from aiolxd.core.lxd_object import LXDObject
+from aiolxd.core.lxd_collection import LXDCollection
+
+from tests.mocks.http_mock import HttpMock
 
 
-@mark.asyncio
-async def test_collection_delete(lxdclient, api_mock):
+class _TestObject(LXDObject):
+    url_pattern = r'^/\w+$'
+
+
+class _TestCollection(LXDCollection[_TestObject]):
+    url_pattern = r'^/$'
+
+
+@fixture(name='lxd_collection') # type: ignore
+@mark.asyncio # type: ignore
+async def _fixture_lxd_collection(http_mock: HttpMock) \
+        -> AsyncGenerator[_TestCollection, _TestCollection]:
+    http_mock('get', '/', ['/object_1', '/object_2'])
+    http_mock('get', '/object_1', {'name': 'object_1'})
+    http_mock('get', '/object_2', {'name': 'object_2'})
+    # aresponses remove mocks once they are called, so adding it
+    # twice as the index will be queried twice in the case of the
+    # delete method.
+    http_mock('get', '/', ['/object_1', '/object_2'])
+
+    async with LXDClient(
+        'http://lxd',
+        endpoint_classes=[_TestCollection, _TestObject]
+    ) as client:
+        collection = await client.get('/')
+        assert isinstance(collection, _TestCollection)
+        yield collection
+
+
+@mark.asyncio # type: ignore
+async def test_collection_delete(
+    lxd_collection: _TestCollection,
+    http_mock: HttpMock,
+) -> None:
     """Checks that in operator works on collections."""
-    _mock_collection_endpoint(api_mock)
-    deleted = {'value': False}
+    deleted = False
 
-    def _handler(_):
-        deleted['value'] = True
+    def _handler(_: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal deleted
+        deleted = True
         return {}
 
-    api_mock('delete', '/object_1', _handler)
-    async with Collection(lxdclient, '') as collection:
-        del collection['object_1']
+    http_mock('delete', '/object_1', _handler)
 
-    assert deleted['value']
+    await lxd_collection.delete('object_1')
+
+    assert deleted
 
 
-@mark.asyncio
-async def test_collection_get_item(lxdclient, api_mock):
+@mark.asyncio # type: ignore
+async def test_collection_get_item(lxd_collection: _TestCollection) -> None:
     """Checks accessing a collection children works."""
-    _mock_collection_endpoint(api_mock)
-    async with Collection(lxdclient, '') as collection:
-        async with collection['object_1'] as child:
-            assert child.name == 'object_1'
+    child = await lxd_collection['object_1']
+    assert getattr(child, 'name') == 'object_1'
 
 
-@mark.asyncio
-async def test_collection_in(lxdclient, api_mock):
+@mark.asyncio # type: ignore
+async def test_collection_in(lxd_collection: _TestCollection) -> None:
     """Checks that in operator works on collections."""
-    _mock_collection_endpoint(api_mock)
-    async with Collection(lxdclient, '') as collection:
-        assert 'object_1' in collection
-        assert 'object_2' in collection
+    assert 'object_1' in lxd_collection
+    assert 'object_2' in lxd_collection
 
 
-@mark.asyncio
-async def test_collection_iterate(lxdclient, api_mock):
+@mark.asyncio # type: ignore
+async def test_collection_iterate(lxd_collection: _TestCollection) -> None:
     """Checks iterating an collection end point returns it's children."""
-    _mock_collection_endpoint(api_mock)
-    async with Collection(lxdclient, '') as collection:
-        names = [it.name async for it in collection]
-        assert names[0] == 'object_1'
-        assert names[1] == 'object_2'
+    names = [it.name async for it in lxd_collection]
+    assert names[0] == 'object_1'
+    assert names[1] == 'object_2'
 
 
-@mark.asyncio
-async def test_collection_len(lxdclient, api_mock):
+@mark.asyncio # type: ignore
+async def test_collection_len(lxd_collection: _TestCollection) -> None:
     """Checks len operator works on collections."""
-    _mock_collection_endpoint(api_mock)
-    async with Collection(lxdclient, '') as collection:
-        assert len(collection) == 2
+    assert len(lxd_collection) == 2
 
 
-@mark.asyncio
-async def test_index_error(lxdclient, api_mock):
+@mark.asyncio # type: ignore
+async def test_index_error(lxd_collection: _TestCollection) -> None:
     """Checks len operator works on collections."""
-    _mock_collection_endpoint(api_mock)
-    async with Collection(lxdclient, '') as collection:
-        with raises(IndexError):
-            # pylint: disable=pointless-statement
-            collection['bad_item']
+    with raises(IndexError):
+        # pylint: disable=pointless-statement
+        lxd_collection['bad_item']
 
-        with raises(IndexError):
-            del collection['bad_item']
-
-
-def _mock_collection_endpoint(api_mock) -> None:
-    api_mock('get', '/', ['/object_1', '/object_2'])
-    api_mock('get', '/object_1', {'name': 'object_1'})
-    api_mock('get', '/object_2', {'name': 'object_2'})
+    with raises(IndexError):
+        await lxd_collection.delete('bad_item')
