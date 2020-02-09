@@ -1,2 +1,40 @@
- * Fixs unit tests
- * Unit test Operation.
+Endpoints left to bind :
+    / (?)
+    /1.0/instances/<name>/console
+    /1.0/instances/<name>/exec
+    /1.0/instances/<name>/files
+    /1.0/instances/<name>/snapshots
+    /1.0/instances/<name>/snapshots/<name>
+    /1.0/instances/<name>/state
+    /1.0/instances/<name>/logs
+    /1.0/instances/<name>/logs/<logfile>
+    /1.0/instances/<name>/metadata
+    /1.0/instances/<name>/metadata/templates
+    /1.0/instances/<name>/backups
+    /1.0/instances/<name>/backups/<name>
+    /1.0/instances/<name>/backups/<name>/export
+    /1.0/images
+    /1.0/images/<fingerprint>
+    /1.0/images/<fingerprint>/export
+    /1.0/images/<fingerprint>/refresh
+    /1.0/images/<fingerprint>/secret
+    /1.0/images/aliases
+    /1.0/images/aliases/<name>
+    /1.0/networks
+    /1.0/networks/<name>
+    /1.0/networks/<name>/state
+    /1.0/profiles
+    /1.0/profiles/<name>
+    /1.0/projects
+    /1.0/projects/<name>
+    /1.0/storage-pools/<name>
+    /1.0/storage-pools/<name>/resources
+    /1.0/storage-pools/<name>/volumes
+    /1.0/storage-pools/<name>/volumes/<type>
+    /1.0/storage-pools/<pool>/volumes/<type>/<name>
+    /1.0/storage-pools/<pool>/volumes/<type>/<name>/snapshots
+    /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>
+    /1.0/resources
+    /1.0/cluster
+    /1.0/cluster/members
+    /1.0/cluster/members/<name>
