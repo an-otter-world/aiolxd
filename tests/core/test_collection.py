@@ -29,6 +29,10 @@ async def _fixture_lxd_collection(http_mock: HttpMock) \
     http_mock('get', '/', ['/object_1', '/object_2'])
     http_mock('get', '/object_1', {'name': 'object_1'})
     http_mock('get', '/object_2', {'name': 'object_2'})
+    # aresponses remove mocks once they are called, so adding it
+    # twice as the index will be queried twice in the case of the
+    # delete method.
+    http_mock('get', '/', ['/object_1', '/object_2'])
 
     async with LXDClient(
         'http://lxd',

@@ -14,5 +14,6 @@ class LXDEndpoint(ABC):
     url_pattern: str
 
     @abstractmethod
-    async def _load(self) -> None:
+    async def load(self) -> None:
+        """Load the endpoint data from LXD API."""
         raise NotImplementedError()

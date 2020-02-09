@@ -93,7 +93,7 @@ class LXDObject(LXDEndpoint):
                 )
         super().__setattr__(name, value)
 
-    async def _load(self) -> None:
+    async def load(self) -> None:
         """Refresh the object data by querying LXD."""
         self._api_data = await self._client.query('get', self._url)
 
@@ -116,4 +116,4 @@ class LXDObject(LXDEndpoint):
 
         # Reload all the object properties, as side effects can happen
         # on the LXD side.
-        await self._load()
+        await self.load()

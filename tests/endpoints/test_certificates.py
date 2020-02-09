@@ -30,6 +30,8 @@ async def test_certificate_add_delete(api: Api) -> None:
         if cert.fingerprint != client_cert_digest:
             await certificates.delete(cert.fingerprint)
 
+    assert len(certificates) == 1
+
     # A bug in add_certificate (or LXD prevent this from working
     # for now)
     # await certificates._load()

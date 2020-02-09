@@ -51,7 +51,7 @@ class Certificates(LXDCollection[Certificate]):
         )
 
         # Update certificates
-        await self._load()
+        await self.load()
 
         # Pylint doesn't seems to correctly resolve BaseCollection __getitem___
         # pylint: disable=unsubscriptable-object
@@ -102,4 +102,7 @@ class Certificates(LXDCollection[Certificate]):
             data['password'] = str(password)
 
         await client.query('post', '/1.0/certificates', data)
+        # Eventually reloading the API endpoint, as trusted information could
+        # have changed here.
+        client.reload('/1.0')
         return fingerprint

@@ -93,6 +93,7 @@ class LXDCollection(BaseCollection[Child], LXDEndpoint):
             raise IndexError()
 
         await self._client.query('delete', child_url)
+        await self.load()
 
-    async def _load(self) -> None:
+    async def load(self) -> None:
         self._item_urls = await self._client.query('get', self._url)

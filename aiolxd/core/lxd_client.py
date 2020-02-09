@@ -100,9 +100,7 @@ class LXDClient:
                 # raise at runtime only.
                 new_endpoint = endpoint_class(self, url) # type: ignore
 
-                # This method should be accessed from here only
-                # pylint: disable=protected-access
-                await new_endpoint._load()
+                await new_endpoint.load()
                 break
 
         assert new_endpoint is not None, \
@@ -113,6 +111,22 @@ class LXDClient:
         assert url not in self._endpoints
         self._endpoints[url] = new_endpoint
         return new_endpoint
+
+    async def reload(self, endpoint_url: str) -> None:
+        """Reload the endpoint at the given url if it's already loaded.
+
+        Usefull to update some endpoints when side effects are expected to
+        happen from other endpoints.
+
+        Args:
+            endpoint_url: Url of the endpoint to reload.
+
+        """
+        endpoint = self._endpoints.get(endpoint_url)
+        if endpoint is None:
+            return
+
+        await endpoint.load()
 
     def query(
         self,
@@ -182,7 +196,7 @@ class LXDClient:
             if message.type == WSMsgType.TEXT:
                 data = loads(message.data)
                 if data['type'] == 'logging':
-                    self.__log_lxd_message(data)
+                    await self.__handle_log_message(data)
                 else:
                     assert False
             elif (
@@ -194,8 +208,7 @@ class LXDClient:
             else:
                 assert False
 
-    @staticmethod
-    def __log_lxd_message(data: Dict[str, Any]) -> None:
+    async def __handle_log_message(self, data: Dict[str, Any]) -> None:
         log = getLogger('aiolxd.lxd_server')
         metadata = data['metadata']
         message = metadata['message']
