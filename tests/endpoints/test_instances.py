@@ -11,7 +11,7 @@ async def test_add_delete_instances(api: Api) -> None:
     if 'test' in instances:
         await instances.delete('test')
 
-    test = await instances.add('test', 'x86_64', {
+    test = await instances.create('test', 'x86_64', {
         'type': 'image',
         'protocol': 'simplestreams',
         'server': 'https://cloud-images.ubuntu.com/daily',

@@ -28,7 +28,9 @@ EndPointType = TypeVar('EndPointType', bound=LXDEndpoint)
 
 
 _LXD_LEVEL_TO_LOG_MAPPING = {
-    'dbug': Logger.debug
+    'dbug': Logger.debug,
+    'info': Logger.info,
+    'eror': Logger.error,
 }
 
 
@@ -195,8 +197,13 @@ class LXDClient:
             message = await self._events_websocket.receive()
             if message.type == WSMsgType.TEXT:
                 data = loads(message.data)
-                if data['type'] == 'logging':
+                message_type = data['type']
+                if message_type == 'logging':
                     await self.__handle_log_message(data)
+                elif message_type == 'operation':
+                    pass
+                elif message_type == 'lifecycle':
+                    pass
                 else:
                     assert False
             elif (

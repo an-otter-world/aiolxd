@@ -23,7 +23,7 @@ class Instances(LXDCollection[Instance]):
 
     url_pattern = r'^/1.0/instances$'
 
-    async def add(
+    async def create(
         self,
         name: str,
         architecture: str,

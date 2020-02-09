@@ -1,5 +1,5 @@
 """Operation helpers."""
-from asyncio import Task
+from asyncio import create_task
 from asyncio import wait
 from json import dumps
 from json import loads
@@ -17,6 +17,8 @@ from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
 from aiohttp import WSMessage
 from aiohttp import WSMsgType
+
+from aiolxd.core.lxd_exception import LXDException
 
 ReadSocketHandler = Callable[[bytes], Awaitable[None]]
 WriteSocketHandler = Callable[[], AsyncIterator[bytes]]
@@ -132,13 +134,18 @@ class LXDOperation:
             jobs = self._get_jobs(metadata)
             self._id = metadata['id']
 
-            tasks = [Task(it) for it in jobs]
+            tasks = [create_task(it) for it in jobs]
 
             wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
             result_data = await self.__query('get', wait_url)
-            await wait(tasks)
+            if tasks:
+                await wait(tasks)
 
-        return cast(Dict[str, Any], result_data['metadata'])
+        metadata = result_data['metadata']
+        if metadata['status_code'] > 300:
+            raise LXDException(metadata['err'])
+
+        return cast(Dict[str, Any], metadata)
 
     async def __connect_websocket(self, secret: str) -> ClientWebSocketResponse:
         assert self._id is not None
