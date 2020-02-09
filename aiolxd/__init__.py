@@ -16,7 +16,7 @@ from aiolxd.core.lxd_endpoint import LXDEndpoint
 from aiolxd.end_points.api import Api
 from aiolxd.end_points.certificates import Certificate
 from aiolxd.end_points.certificates import Certificates
-from aiolxd.end_points.instances import Instance
+from aiolxd.end_points.instance import Instance
 from aiolxd.end_points.instances import Instances
 
 _ALL_ENDPOINTS: List[Type[LXDEndpoint]] = [

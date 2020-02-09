@@ -26,7 +26,6 @@ from aiolxd.core.utils import get_ssl_context
 
 EndPointType = TypeVar('EndPointType', bound=LXDEndpoint)
 
-
 _LXD_LEVEL_TO_LOG_MAPPING = {
     'dbug': Logger.debug,
     'info': Logger.info,
@@ -134,23 +133,29 @@ class LXDClient:
         self,
         method: str,
         url: str,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
+        operation_type: Type[LXDOperation] = LXDOperation,
+        **kwargs: Any
     ) -> LXDOperation:
         """Query the api, returning an LXDOperation awaitable class.
 
         Args:
-            url: Url to query, relative to the api root (ex: /1.0/certificates).
             method: Http method (get, put, patch, post, delete).
+            url: Url to query, relative to the api root (ex: /1.0/certificates).
             data: Data as a python dictionary to send with put, patch and post
                   methods.
+            operation_type: Type of operation to instanciate.
+            **kwargs: Additional arguments to give to the operation
+                      constructor.
 
         """
-        return LXDOperation(
+        return operation_type( # type: ignore
             session=self._session,
-            base_url=self._base_url,
             method=method,
+            base_url=self._base_url,
             url=url,
-            data=data
+            data=data,
+            **kwargs
         )
 
     async def handle_events(self) -> None:

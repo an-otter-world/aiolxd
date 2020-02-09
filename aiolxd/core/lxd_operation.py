@@ -9,7 +9,7 @@ from typing import Awaitable
 from typing import Callable
 from typing import Coroutine
 from typing import Dict
-from typing import List
+from typing import Iterable
 from typing import Optional
 from typing import cast
 
@@ -67,7 +67,8 @@ class LXDOperation:
         return self.__process().__await__()
 
     # pylint: disable=no-self-use
-    def _get_jobs(self, _: Dict[str, Any]) -> List[Coroutine[Any, Any, Any]]:
+    def _get_jobs(self, _: Dict[str, Any]) \
+            -> Iterable[Coroutine[Any, Any, Any]]:
         return []
 
     async def _read_websocket(

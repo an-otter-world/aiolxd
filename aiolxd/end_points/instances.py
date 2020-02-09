@@ -1,21 +1,11 @@
 """1.0/instances/* LXD API endpoint & objects."""
 from typing import Any
-from typing import Optional
-from typing import List
 from typing import Dict
+from typing import List
+from typing import Optional
 
-from aiolxd.core.lxd_object import LXDObject
 from aiolxd.core.lxd_collection import LXDCollection
-
-
-class Instance(LXDObject):
-    """/1.0/instances/{name} object wrapper."""
-
-    url_pattern = r'^/1.0/instances/[\w|-|_]*'
-
-    readonly_fields = {
-        'status'
-    }
+from aiolxd.end_points.instance import Instance
 
 
 class Instances(LXDCollection[Instance]):

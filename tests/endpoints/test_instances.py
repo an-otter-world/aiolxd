@@ -9,12 +9,19 @@ async def test_add_delete_instances(api: Api) -> None:
     """Instances end point should allow to add and delete instances."""
     instances = await api.instances()
     if 'test' in instances:
+        test = await instances['test']
+        await test.stop()
         await instances.delete('test')
 
-    test = await instances.create('test', 'x86_64', {
-        'type': 'image',
-        'protocol': 'simplestreams',
-        'server': 'https://cloud-images.ubuntu.com/daily',
-        'alias': '16.04'
-    })
-    assert test is not None
+    test = await instances.create(
+        'test',
+        'x86_64',
+        ephemeral=False,
+        source={
+            'type': 'image',
+            'protocol': 'simplestreams',
+            'server': 'https://cloud-images.ubuntu.com/daily',
+            'alias': '16.04'
+        }
+    )
+    await test.start()

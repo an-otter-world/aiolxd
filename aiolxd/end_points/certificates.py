@@ -104,5 +104,5 @@ class Certificates(LXDCollection[Certificate]):
         await client.query('post', '/1.0/certificates', data)
         # Eventually reloading the API endpoint, as trusted information could
         # have changed here.
-        client.reload('/1.0')
+        await client.reload('/1.0')
         return fingerprint

@@ -1,7 +1,6 @@
 Endpoints left to bind :
     / (?)
     /1.0/instances/<name>/console
-    /1.0/instances/<name>/exec
     /1.0/instances/<name>/files
     /1.0/instances/<name>/snapshots
     /1.0/instances/<name>/snapshots/<name>
