@@ -11,10 +11,6 @@ from aiolxd.end_points.api import Api
 @mark.asyncio # type: ignore
 async def test_certificate_add_delete(api: Api) -> None:
     """Certificates end point should allow to add and delete certificates."""
-    assert api.auth == 'untrusted'
-    await api.authenticate(password='password')
-    assert api.auth == 'trusted'
-
     certificates = await api.certificates()
 
     # pylint: disable=protected-access
@@ -24,7 +20,6 @@ async def test_certificate_add_delete(api: Api) -> None:
         client_cert = cert_file.read()
     client_cert_digest = get_digest(client_cert)
 
-    # Add current client certificate for authentication.
     assert client_cert_digest in certificates
     async for cert in certificates:
         if cert.fingerprint != client_cert_digest:
@@ -32,8 +27,8 @@ async def test_certificate_add_delete(api: Api) -> None:
 
     assert len(certificates) == 1
 
-    # A bug in add_certificate (or LXD prevent this from working
-    # for now)
+    # A bug in add_certificate (or LXD) prevents this from working
+    # for now
     # await certificates._load()
 
     # digest, pem, path = _load_test_certificate(datadir)

@@ -29,6 +29,7 @@ async def api() -> AsyncGenerator[Api, Api]:
     environ[server_env_key] = 'https://localhost:8443'
     if server_env_key not in environ:
         async with api_mock() as api_object:
+            await api_object.authenticate(password='password')
             yield api_object
     else:
         with get_temp_certificate() as (client_key, client_cert):
@@ -38,6 +39,7 @@ async def api() -> AsyncGenerator[Api, Api]:
                 client_key=client_key,
                 verify_host_certificate=False,
             ) as api_object:
+                await api_object.authenticate(password='password')
                 yield api_object
 
 

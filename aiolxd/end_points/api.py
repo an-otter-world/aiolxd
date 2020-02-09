@@ -1,6 +1,7 @@
 """Root lxd api endpoint."""
 from aiolxd.core.lxd_object import LXDObject
 from aiolxd.end_points.certificates import Certificates
+from aiolxd.end_points.instances import Instances
 
 
 class Api(LXDObject):
@@ -13,6 +14,12 @@ class Api(LXDObject):
         certificates = await self._client.get('/1.0/certificates')
         assert isinstance(certificates, Certificates)
         return certificates
+
+    async def instances(self) -> Instances:
+        """Get the instances endpoint wrapper."""
+        instances = await self._client.get('/1.0/instances')
+        assert isinstance(instances, Instances)
+        return instances
 
     @property
     def is_client_trusted(self) -> bool:
