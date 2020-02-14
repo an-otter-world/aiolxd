@@ -73,13 +73,15 @@ class Source:
     def to_lxd(self) -> Dict[str, Any]:
         """Return a dictionnary usable as source parameter of a LXD call."""
         lxd_source = {
-            'type': self.type,
-            'mode': self.mode,
+            'type': self.type.value,
+            'mode': self.mode.value,
         }
 
         def add(*parameters: str) -> None:
             for param in parameters:
                 value = getattr(self, param, None)
+                if isinstance(value, Enum):
+                    value = value.value
                 if value is not None:
                     lxd_source[param] = value
 
@@ -118,7 +120,7 @@ class Instances(LXDCollection[Instance]):
         data = {
             'name': name,
             'architecture': architecture,
-            'source': source,
+            'source': source.to_lxd(),
             'ephemeral': ephemeral
         }
 
