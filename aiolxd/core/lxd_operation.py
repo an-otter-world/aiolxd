@@ -1,6 +1,7 @@
 """Operation helpers."""
 from asyncio import create_task
 from asyncio import wait
+from contextlib import asynccontextmanager
 from json import dumps
 from json import loads
 from typing import Any
@@ -11,6 +12,7 @@ from typing import Coroutine
 from typing import Dict
 from typing import Iterable
 from typing import Optional
+from typing import Set
 from typing import cast
 
 from aiohttp import ClientSession
@@ -57,6 +59,7 @@ class LXDOperation:
         self._url = url
         self._data = data
         self._id = None
+        self._opened_sockets: Set[ClientWebSocketResponse] = set()
 
     def __await__(self) -> Any:
         """Await until this LXD operation is terminated.
@@ -76,8 +79,6 @@ class LXDOperation:
         secret: str,
         handler: ReadSocketHandler
     ) -> None:
-        socket = await self.__connect_websocket(secret)
-
         async def _on_binary(message: WSMessage) -> None:
             if handler is None:
                 return
@@ -96,33 +97,33 @@ class LXDOperation:
             WSMsgType.TEXT: _on_text
         }
 
-        while True:
-            message = await socket.receive()
-            message_type = message.type
-            if message_type in handlers:
-                message_handler = handlers[message_type]
-                await message_handler(message)
-            elif message_type in [WSMsgType.CLOSE, WSMsgType.CLOSED]:
-                break
+        async with self.__connect_websocket(secret) as socket:
+            while True:
+                message = await socket.receive()
+                message_type = message.type
+                if message_type in handlers:
+                    message_handler = handlers[message_type]
+                    await message_handler(message)
+                elif message_type in [WSMsgType.CLOSE, WSMsgType.CLOSED]:
+                    break
 
     async def _write_websocket(
         self,
         secret: str,
         handler: WriteSocketHandler
     ) -> None:
-        socket = await self.__connect_websocket(secret)
+        async with self.__connect_websocket(secret) as socket:
+            if handler is None:
+                await socket.close()
+                return
 
-        if handler is None:
-            await socket.close()
-            return
-
-        async for data in handler():
-            await socket.send_bytes(data)
+            async for data in handler():
+                await socket.send_bytes(data)
 
     async def _control_websocket(self, secret: str) -> None:
-        socket = await self.__connect_websocket(secret)
-        # TODO : Implement some wrapper for control socket operation.
-        await socket.close()
+        async with self.__connect_websocket(secret) as socket:
+            # TODO : Implement some wrapper for control socket operation.
+            await socket.close()
 
     async def __process(self) -> Dict[str, Any]:
         result = await self.__query(self._method, self._url, self._data)
@@ -139,16 +140,26 @@ class LXDOperation:
 
             wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
             result_data = await self.__query('get', wait_url)
+
+            # Need to copy here, as sockets will be removed
+            # from opened sockets set during iteration.
+            for socket in list(self._opened_sockets):
+                await socket.close()
+
             if tasks:
                 await wait(tasks)
 
-        metadata = result_data['metadata']
-        if metadata['status_code'] > 300:
-            raise LXDException(metadata['err'])
+            assert len(self._opened_sockets) == 0
 
-        return cast(Dict[str, Any], metadata)
+            metadata = result_data['metadata']
+            if metadata['status_code'] > 300:
+                raise LXDException(metadata['err'])
 
-    async def __connect_websocket(self, secret: str) -> ClientWebSocketResponse:
+            return cast(Dict[str, Any], metadata)
+
+    @asynccontextmanager
+    async def __connect_websocket(self, secret: str)\
+            -> AsyncIterator[ClientWebSocketResponse]:
         assert self._id is not None
         url_format = '{base_url}/1.0/operations/{id}/websocket?secret={secret}'
         url = url_format.format(
@@ -156,7 +167,15 @@ class LXDOperation:
             id=self._id,
             secret=secret
         )
-        return await self._session.ws_connect(url)
+        socket = await self._session.ws_connect(url)
+        self._opened_sockets.add(socket)
+        try:
+            yield socket
+        # Todo : fix that, it's used in cchoir to write nothing on stdin.
+        except StopAsyncIteration:
+            pass
+        finally:
+            self._opened_sockets.remove(socket)
 
     async def __query(
         self,

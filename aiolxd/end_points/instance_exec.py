@@ -75,4 +75,4 @@ class ExecOperation(LXDOperation):
 
     @staticmethod
     def __dummy_write() -> AsyncIterator[bytes]:
-        raise StopAsyncIteration
+        raise StopAsyncIteration()
