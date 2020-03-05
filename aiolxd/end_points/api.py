@@ -38,7 +38,6 @@ class Api(LXDObject):
             client=self._client,
             password=password
         )
-        await self.load()
 
     async def load(self) -> None:
         await super().load()

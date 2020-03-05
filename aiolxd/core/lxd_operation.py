@@ -189,7 +189,7 @@ class LXDOperation:
     ) -> Dict[str, Any]:
         dumped_data: Any = None
         if data is not None:
-            if data is dict:
+            if isinstance(data, dict):
                 dumped_data = dumps(data)
             else:
                 dumped_data = data
