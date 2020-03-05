@@ -20,6 +20,7 @@ from aiohttp import TCPConnector
 from aiohttp import WSMsgType
 
 from aiolxd.core.lxd_operation import LXDOperation
+from aiolxd.core.lxd_operation import QueryData
 from aiolxd.core.lxd_endpoint import LXDEndpoint
 from aiolxd.core.utils import get_ssl_context
 
@@ -133,7 +134,7 @@ class LXDClient:
         self,
         method: str,
         url: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[QueryData] = None,
         operation_type: Type[LXDOperation] = LXDOperation,
         **kwargs: Any
     ) -> LXDOperation:

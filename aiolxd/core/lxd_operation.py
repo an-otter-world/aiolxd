@@ -13,6 +13,8 @@ from typing import Dict
 from typing import Iterable
 from typing import Optional
 from typing import Set
+from typing import IO
+from typing import Union
 from typing import cast
 
 from aiohttp import ClientSession
@@ -24,6 +26,8 @@ from aiolxd.core.lxd_exception import LXDException
 
 ReadSocketHandler = Callable[[bytes], Awaitable[None]]
 WriteSocketHandler = Callable[[], AsyncIterator[bytes]]
+
+QueryData = Union[Dict[str, Any], IO[bytes], IO[str]]
 
 
 class LXDOperation:
@@ -41,7 +45,7 @@ class LXDOperation:
         method: str,
         base_url: str,
         url: str,
-        data: Optional[Dict[str, Any]]
+        data: Optional[QueryData]
     ):
         """Initialize this operation.
 
@@ -131,31 +135,31 @@ class LXDOperation:
         if result['type'] == 'sync':
             return cast(Dict[str, Any], result['metadata'])
 
-        if result['type'] == 'async':
-            metadata = result['metadata']
-            jobs = self._get_jobs(metadata)
-            self._id = metadata['id']
+        assert result['type'] == 'async'
+        metadata = result['metadata']
+        jobs = self._get_jobs(metadata)
+        self._id = metadata['id']
 
-            tasks = [create_task(it) for it in jobs]
+        tasks = [create_task(it) for it in jobs]
 
-            wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
-            result_data = await self.__query('get', wait_url)
+        wait_url = '/1.0/operations/{id}/wait'.format(id=self._id)
+        result_data = await self.__query('get', wait_url)
 
-            # Need to copy here, as sockets will be removed
-            # from opened sockets set during iteration.
-            for socket in list(self._opened_sockets):
-                await socket.close()
+        # Need to copy here, as sockets will be removed
+        # from opened sockets set during iteration.
+        for socket in list(self._opened_sockets):
+            await socket.close()
 
-            if tasks:
-                await wait(tasks)
+        if tasks:
+            await wait(tasks)
 
-            assert len(self._opened_sockets) == 0
+        assert len(self._opened_sockets) == 0
 
-            metadata = result_data['metadata']
-            if metadata['status_code'] > 300:
-                raise LXDException(metadata['err'])
+        metadata = result_data['metadata']
+        if metadata['status_code'] > 300:
+            raise LXDException(metadata['err'])
 
-            return cast(Dict[str, Any], metadata)
+        return cast(Dict[str, Any], metadata)
 
     @asynccontextmanager
     async def __connect_websocket(self, secret: str)\
@@ -181,15 +185,18 @@ class LXDOperation:
         self,
         method: str,
         url: str,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[QueryData] = None
     ) -> Dict[str, Any]:
-        json_data = None
+        dumped_data: Any = None
         if data is not None:
-            json_data = dumps(data)
+            if data is dict:
+                dumped_data = dumps(data)
+            else:
+                dumped_data = data
 
         url = '{base_url}{url}'.format(base_url=self._base_url, url=url)
 
-        request = self._session.request(method, url, data=json_data)
+        request = self._session.request(method, url, data=dumped_data)
 
         async with request as response:
             body = await response.read()
