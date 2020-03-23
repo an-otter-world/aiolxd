@@ -13,7 +13,8 @@ async def test_add_delete_instances(api: Api) -> None:
     instances = await api.instances()
     if 'test' in instances:
         test = await instances['test']
-        await test.stop()
+        if test.status == 'Running':
+            await test.stop()
         await instances.delete('test')
 
     test = await instances.create(
@@ -32,7 +33,7 @@ async def test_add_delete_instances(api: Api) -> None:
     await test.start()
 
     path = Path('/etc/test_file')
-    async with test.open(path, 'wb') as file:
+    async with test.open(path, 'wb', uid=1, gid=1, file_mode='0644') as file:
         await file.write(b'Test file content')
 
     async with test.open(path, 'rb') as file:

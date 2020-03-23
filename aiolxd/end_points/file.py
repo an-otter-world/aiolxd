@@ -19,22 +19,42 @@ ReadContext = AsyncContextManager[ClientResponse]
 class File:
     """Class representing a file in a running instance."""
 
-    def __init__(self, client: LXDClient, url: str, mode: str):
+    def __init__(
+        self,
+        client: LXDClient,
+        url: str,
+        mode: str,
+        uid: int = 0,
+        gid: int = 0,
+        file_mode: str = '0700'
+    ):
         """Initialize this file.
+
+        Append mode isn't supported, and the file will be open in binary mode
+        (text mode isn't supported either for now). Both could be implemented
+        though.
 
         Args:
             client: The LXDClient to query.
-            mode: The mode in which to open the file. Text mode isn't supported.
             url: Full url to the file, including query parameters.
+            mode: The mode in which to open the file. Text mode isn't supported.
+            uid: The uid of the created file.
+            gid: Gid for the created file.
+            file_mode: Permissions for the file.
 
         """
         self._client = client
         self._mode = mode
+        self._read_context: Optional[ReadContext] = None
         self._read_stream: Optional[StreamReader] = None
+        self._send_task: Optional[Task[None]] = None
         self._url = url
         self._write_queue: 'Queue[Optional[bytes]]' = Queue()
-        self._send_task: Optional[Task[None]] = None
-        self._read_context: Optional[ReadContext] = None
+        self._headers = {
+            'X-LXD-uid': str(uid),
+            'X-LXD-gid': str(gid),
+            'X-LXD-mode': file_mode
+        }
 
     async def __aenter__(self) -> 'File':
         """Enter the client context."""
@@ -79,5 +99,10 @@ class File:
                     break
                 yield chunk
 
-        async with self._client.raw_query('post', self._url, _bytes_iterator()):
+        async with self._client.raw_query(
+            'post',
+            self._url,
+            _bytes_iterator(),
+            headers=self._headers
+        ):
             pass

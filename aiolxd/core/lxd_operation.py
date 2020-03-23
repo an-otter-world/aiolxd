@@ -21,6 +21,7 @@ from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
 from aiohttp import WSMessage
 from aiohttp import WSMsgType
+from aiohttp.typedefs import LooseHeaders
 
 from aiolxd.core.lxd_exception import LXDException
 
@@ -45,7 +46,8 @@ class LXDOperation:
         method: str,
         base_url: str,
         url: str,
-        data: Optional[QueryData]
+        data: Optional[QueryData],
+        headers: Optional[LooseHeaders] = None
     ):
         """Initialize this operation.
 
@@ -55,6 +57,7 @@ class LXDOperation:
             base_url: Base url of LXD API.
             url: The endpoint of this operation.
             data: Parameters to send with post, put or path methods.
+            headers: Additional headers to send with the request.
 
         """
         self._session = session
@@ -64,6 +67,7 @@ class LXDOperation:
         self._data = data
         self._id = None
         self._opened_sockets: Set[ClientWebSocketResponse] = set()
+        self._headers = headers
 
     def __await__(self) -> Any:
         """Await until this LXD operation is terminated.
@@ -196,7 +200,12 @@ class LXDOperation:
 
         url = '{base_url}{url}'.format(base_url=self._base_url, url=url)
 
-        request = self._session.request(method, url, data=dumped_data)
+        request = self._session.request(
+            method,
+            url,
+            data=dumped_data,
+            headers=self._headers
+        )
 
         async with request as response:
             body = await response.read()

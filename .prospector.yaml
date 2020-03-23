@@ -12,6 +12,7 @@ pylint:
     - too-few-public-methods
     - line-too-long # Already checked by pep8
     - too-many-arguments
+    - too-many-instance-attributes
 
 mccabe:
   run: true

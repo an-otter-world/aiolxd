@@ -21,6 +21,7 @@ from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
 from aiohttp import TCPConnector
 from aiohttp import WSMsgType
+from aiohttp.typedefs import LooseHeaders
 
 from aiolxd.core.lxd_operation import LXDOperation
 from aiolxd.core.lxd_operation import QueryData
@@ -139,6 +140,7 @@ class LXDClient:
         url: str,
         data: Optional[QueryData] = None,
         operation_type: Type[LXDOperation] = LXDOperation,
+        headers: Optional[LooseHeaders] = None,
         **kwargs: Any
     ) -> LXDOperation:
         """Query the api, returning an LXDOperation awaitable class.
@@ -149,6 +151,7 @@ class LXDClient:
             data: Data as a python dictionary to send with put, patch and post
                   methods.
             operation_type: Type of operation to instanciate.
+            headers: Additional headers to send with the query.
             **kwargs: Additional arguments to give to the operation
                       constructor.
 
@@ -159,18 +162,32 @@ class LXDClient:
             base_url=self._base_url,
             url=url,
             data=data,
+            headers=headers,
             **kwargs
         )
 
     @asynccontextmanager
-    async def raw_query(self, method: str, url: str, data: Any = None)\
+    async def raw_query(
+        self,
+        method: str,
+        url: str,
+        data: Any = None,
+        headers: Optional[LooseHeaders] = None
+    )\
             -> AsyncGenerator[ClientResponse, ClientResponse]:
         """Send a raw http query to the LXD server.
 
         Used to download / upload files for example.
+
+        Args:
+            method: Http method (get / post ...)
+            url: Relative url to query on the LXD server.
+            data: Data to send with the request.
+            headers: Headers to add to the request.
+
         """
         url = '{base_url}{url}'.format(base_url=self._base_url, url=url)
-        request = self._session.request(method, url, data=data)
+        request = self._session.request(method, url, data=data, headers=headers)
         async with request as response:
             yield response
 

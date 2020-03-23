@@ -79,7 +79,23 @@ class Instance(LXDObject):
             'action': 'stop'
         })
 
-    def open(self, path: Path, mode: str) -> File:
-        """Return a file that can be writen or read from this instance."""
+    def open(
+        self,
+        path: Path,
+        mode: str,
+        uid: int = 0,
+        gid: int = 0,
+        file_mode: str = '0700'
+    ) -> File:
+        """Return a file that can be writen or read from this instance.
+
+        Args:
+            path: Path of the file on the instance.
+            mode: The mode in which to open the file. Text mode isn't supported.
+            uid: The uid of the created file.
+            gid: Gid for the created file.
+            file_mode: Permissions for the file.
+
+        """
         url = '{}/files?path={}'.format(self._url, path)
-        return File(self._client, url, mode)
+        return File(self._client, url, mode, uid, gid, file_mode)
