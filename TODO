@@ -37,3 +37,7 @@ Endpoints left to bind :
     /1.0/cluster
     /1.0/cluster/members
     /1.0/cluster/members/<name>
+
+ * Add support for gid / uid / mode for instance.storage
+ * Create an AioLXDFile that has a uid / gid / mode members, and a stream.
+ * Add list_dir / create_dir / delete functions on instance.

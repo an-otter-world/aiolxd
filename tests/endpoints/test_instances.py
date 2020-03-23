@@ -1,5 +1,4 @@
 """Instances LXD endpoint unit tests."""
-from io import StringIO
 from pathlib import Path
 
 from pytest import mark
@@ -32,6 +31,10 @@ async def test_add_delete_instances(api: Api) -> None:
 
     await test.start()
 
-    file_content = StringIO("Test file content")
+    path = Path('/etc/test_file')
+    async with test.open(path, 'wb') as file:
+        await file.write(b'Test file content')
 
-    await test.store(file_content, Path('/etc/test_file'))
+    async with test.open(path, 'rb') as file:
+        file_content = await file.read()
+        assert file_content == b'Test file content'

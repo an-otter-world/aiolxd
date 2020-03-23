@@ -10,6 +10,7 @@ from aiolxd.core.lxd_object import LXDObject
 from aiolxd.core.lxd_operation import LXDOperation
 from aiolxd.core.lxd_operation import ReadSocketHandler
 from aiolxd.core.lxd_operation import WriteSocketHandler
+from aiolxd.end_points.file import File
 from aiolxd.end_points.instance_exec import ExecOperation
 
 FileStream = Union[IO[bytes], IO[str]]
@@ -78,7 +79,7 @@ class Instance(LXDObject):
             'action': 'stop'
         })
 
-    async def store(self, content: FileStream, target_path: Path) -> None:
-        """Store the content of the given stream in a file on the instance."""
-        url = '{}/files?path={}'.format(self._url, target_path)
-        await self._client.query('post', url, data=content)
+    def open(self, path: Path, mode: str) -> File:
+        """Return a file that can be writen or read from this instance."""
+        url = '{}/files?path={}'.format(self._url, path)
+        return File(self._client, url, mode)

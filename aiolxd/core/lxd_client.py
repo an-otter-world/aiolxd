@@ -1,6 +1,7 @@
 """HTTP client class & related utilities."""
 from asyncio import Task
 from asyncio import create_task
+from contextlib import asynccontextmanager
 from json import loads
 from logging import Logger
 from logging import getLogger
@@ -8,12 +9,14 @@ from pathlib import Path
 from re import match
 from types import TracebackType
 from typing import Any
+from typing import AsyncGenerator
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
 from typing import TypeVar
 
+from aiohttp import ClientResponse
 from aiohttp import ClientSession
 from aiohttp import ClientWebSocketResponse
 from aiohttp import TCPConnector
@@ -158,6 +161,18 @@ class LXDClient:
             data=data,
             **kwargs
         )
+
+    @asynccontextmanager
+    async def raw_query(self, method: str, url: str, data: Any = None)\
+            -> AsyncGenerator[ClientResponse, ClientResponse]:
+        """Send a raw http query to the LXD server.
+
+        Used to download / upload files for example.
+        """
+        url = '{base_url}{url}'.format(base_url=self._base_url, url=url)
+        request = self._session.request(method, url, data=data)
+        async with request as response:
+            yield response
 
     async def handle_events(self) -> None:
         """Listen the /1.0/events endpoint.
