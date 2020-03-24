@@ -32,8 +32,9 @@ async def test_add_delete_instances(api: Api) -> None:
 
     await test.start()
 
+    await test.make_directory('/etc/test_directory')
     path = Path('/etc/test_file')
-    async with test.open(path, 'wb', uid=1, gid=1, file_mode='0644') as file:
+    async with test.open(path, 'wb', uid=1, gid=1, file_mode='0655') as file:
         await file.write(b'Test file content')
 
     async with test.open(path, 'rb') as file:

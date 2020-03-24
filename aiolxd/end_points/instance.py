@@ -99,3 +99,29 @@ class Instance(LXDObject):
         """
         url = '{}/files?path={}'.format(self._url, path)
         return File(self._client, url, mode, uid, gid, file_mode)
+
+    async def make_directory(
+        self,
+        path: Path,
+        uid: int = 0,
+        gid: int = 0,
+        file_mode: str = '0700'
+    ) -> None:
+        """Create a directory at the specified path on the instance.
+
+        Args:
+            path: Path of the file on the instance.
+            uid: The uid of the created file.
+            gid: Gid for the created file.
+            file_mode: Permissions for the file.
+
+        """
+        await self._client.query(
+            'post',
+            '{}/files?path={}'.format(self._url, path),
+            headers={
+                'X-LXD-uid': str(uid),
+                'X-LXD-gid': str(gid),
+                'X-LXD-mode': file_mode
+            }
+        )
