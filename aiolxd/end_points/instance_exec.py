@@ -7,6 +7,7 @@ from typing import Iterator
 from typing import Optional
 
 from aiohttp import ClientSession
+from aiohttp.typedefs import LooseHeaders
 
 from aiolxd.core.lxd_operation import LXDOperation
 from aiolxd.core.lxd_operation import ReadSocketHandler
@@ -29,17 +30,19 @@ class ExecOperation(LXDOperation):
         data: Dict[str, Any],
         stdin: Optional[WriteSocketHandler],
         stdout: Optional[ReadSocketHandler],
-        stderr: Optional[ReadSocketHandler]
+        stderr: Optional[ReadSocketHandler],
+        headers: Optional[LooseHeaders] = None
     ):
         """Initialize the Exec operation.
 
         Don't call it directly, use LXDClient.query and the factory() function.
         """
-        super().__init__(session, method, base_url, url, data)
+        super().__init__(session, method, base_url, url, data, headers)
 
         self._stdout = stdout
         self._stderr = stderr
         self._stdin = stdin
+        self._headers = headers
 
         # If one of these is defined, all must be defined
         if stdin is not None or stdout is not None or stderr is not None:
