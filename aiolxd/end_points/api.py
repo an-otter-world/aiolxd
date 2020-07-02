@@ -2,6 +2,7 @@
 from aiolxd.core.lxd_object import LXDObject
 from aiolxd.end_points.certificates import Certificates
 from aiolxd.end_points.instances import Instances
+from aiolxd.end_points.projects import Projects
 
 
 class Api(LXDObject):
@@ -19,6 +20,12 @@ class Api(LXDObject):
         """Get the instances endpoint wrapper."""
         instances = await self._client.get('/1.0/instances')
         assert isinstance(instances, Instances)
+        return instances
+
+    async def projects(self) -> Projects:
+        """Get the projects endpoint wrapper."""
+        instances = await self._client.get('/1.0/projects')
+        assert isinstance(instances, Projects)
         return instances
 
     @property

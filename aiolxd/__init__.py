@@ -18,7 +18,8 @@ from aiolxd.end_points.certificates import Certificate
 from aiolxd.end_points.certificates import Certificates
 from aiolxd.end_points.instance import Instance
 from aiolxd.end_points.instances import Instances
-from aiolxd.end_points.instances import Source
+from aiolxd.end_points.projects import Project
+from aiolxd.end_points.projects import Projects
 
 _ALL_ENDPOINTS: List[Type[LXDEndpoint]] = [
     Api,
@@ -26,6 +27,8 @@ _ALL_ENDPOINTS: List[Type[LXDEndpoint]] = [
     Certificates,
     Instance,
     Instances,
+    Project,
+    Projects
 ]
 
 
