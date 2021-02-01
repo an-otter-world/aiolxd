@@ -1,11 +1,6 @@
 """aiolxd is an abstraction of the LXD rest api, using asyncio requests."""
 from contextlib import asynccontextmanager
 from pathlib import Path
-from re import match
-from types import TracebackType
-from typing import Any
-from typing import Dict
-from typing import cast
 from typing import List
 from typing import Optional
 from typing import Type
